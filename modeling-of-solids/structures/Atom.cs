@@ -2,7 +2,7 @@
 {
 	public enum AtomType
 	{
-		Ar,
+		Ar
 	}
 
 	public struct Atom
@@ -36,6 +36,7 @@
 		/// Создание атома.
 		/// </summary>
 		/// <param name="id"></param>
+		/// <param name="atomType"></param>
 		/// <param name="pos"></param>
 		public Atom(int id, AtomType atomType, Vector pos)
 		{

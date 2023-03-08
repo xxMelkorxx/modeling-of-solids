@@ -3,11 +3,128 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:modeling_of_solids"
-        
-        mc:Ignorable="d"
-        Title="MainWindow" WindowState="Maximized" MinHeight="600" MinWidth="1000">
-    <Grid>
 
+        mc:Ignorable="d"
+        Title="ННГУ ИСИТ | Моделирование методом молекулярной динамики" 
+        WindowState="Maximized" 
+        Icon="/icons/unn_logo.ico" 
+        FontSize="14" FontFamily="Segoe UI Semibold"
+        Loaded="OnLoadMainWindow">
+
+    <Grid Margin="5,0,5,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <GroupBox Grid.Column="0" Header="Графики энергии системы">
+            <StackPanel>
+                <WpfPlot Name="WpfPlotFe" />
+                <WpfPlot Name="WpfPlotKe" />
+                <WpfPlot Name="WpfPlotPe" />
+                <ProgressBar Name="PbTimeStep" />
+            </StackPanel>
+        </GroupBox>
+
+        <StackPanel Grid.Column="1">
+            <GroupBox Header="Визуализация" VerticalAlignment="Top" MinHeight="500">
+                <Viewport3D Name="Viewport">
+
+                </Viewport3D>
+            </GroupBox>
+
+            <GroupBox Header="Выходная информация" VerticalAlignment="Bottom" MinHeight="300">
+                <RichTextBox Name="RtbOutputInfo" FontFamily="Cascadia Mono" IsReadOnly="True" />
+            </GroupBox>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2">
+            <GroupBox Header="Параметры системы">
+                <StackPanel>
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Размер системы</Label>
+                        <xctk:IntegerUpDown Name="NudSize" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="1000" Increment="1" Value="3"/>
+                    </WrapPanel>
+
+                    <CheckBox Name="CbIsDisplacement" HorizontalAlignment="Right" Margin="0 5 0 0"
+                              Checked="OnCheckedDisplacement"
+                              Unchecked="OnUncheckedDisplacement">
+                        Задать смещение атомов?
+                    </CheckBox>
+
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Величина смещения</Label>
+                        <xctk:DoubleUpDown Name="NudDisplacement" TextAlignment="Right" Width="100" Height="25" Minimum="0" Maximum="1" Increment="0.01" Value="0.05"
+                                           IsEnabled="False" />
+                    </WrapPanel>
+                    
+                    <Button HorizontalAlignment="Right" Height="50" Width="50" Margin="0 5 0 0" 
+                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                            Click="OnCreateModel">
+                        <Image Source="icons/check.png" />
+                    </Button>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Параметры моделирования">
+                <StackPanel>
+                    <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
+                        <Label>Временной шаг</Label>
+                        <xctk:IntegerUpDown Name="NudTimeStep" TextAlignment="Right" Width="40" Height="25" Minimum="1" Maximum="10" Increment="1" Value="1" />
+                        <Label>e</Label>
+                        <xctk:IntegerUpDown Name="NudTimeStepOrder" TextAlignment="Right" Width="45" Height="25" Minimum="0" Maximum="-100" Increment="1" Value="-14" />
+                    </WrapPanel>
+
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Число шагов</Label>
+                        <xctk:IntegerUpDown Name="NudCountStep" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="10000000" Increment="1000" Value="1000" />
+                    </WrapPanel>
+
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Шаг снимков системы</Label>
+                        <xctk:IntegerUpDown Name="NudSnapshotStep" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="100000" Increment="1" Value="1" />
+                    </WrapPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Параметры перенормироваки скоростей">
+                <StackPanel>
+                    <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
+                        <Label>Температура</Label>
+                        <xctk:IntegerUpDown Name="NudTemperature" TextAlignment="Right" Width="100" Height="25" Minimum="0" Maximum="10000" Increment="10" Value="300" />
+                    </WrapPanel>
+                    
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Шаг перенормировки</Label>
+                        <xctk:IntegerUpDown Name="NudStepNorm" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="100" Increment="5" Value="10" />
+                    </WrapPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Панель управления">
+                <WrapPanel HorizontalAlignment="Center" Margin="0 5 0 0">
+                    <Button Name="BtnStartCalculation" IsEnabled="False" Width="50" Height="50"
+                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                            Click="OnStartCalculation">
+                        <Image Source="icons/play.png" Width="40" Height="40" />
+                    </Button>
+                    
+                    <Button Name="BtnPauseCalculation" IsEnabled="False" Width="50" Height="50"
+                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                            Click="OnPauseCalculation">
+                        <Image Source="icons/pause.png" Width="40" Height="40" />
+                    </Button>
+                    
+                    <Button Name="BtnResetCalculation" IsEnabled="False" Width="50" Height="50"
+                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                            Click="OnResetCalculation">
+                        <Image Source="icons/refresh.png" Width="40" Height="40" />
+                    </Button>
+                </WrapPanel>
+            </GroupBox>
+        </StackPanel>
     </Grid>
 </Window>
