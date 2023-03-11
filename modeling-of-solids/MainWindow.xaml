@@ -29,44 +29,66 @@
             </StackPanel>
         </GroupBox>
 
-        <StackPanel Grid.Column="1">
-            <GroupBox Header="Визуализация" VerticalAlignment="Top" MinHeight="500">
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <GroupBox Grid.Row="0" Header="Визуализация">
                 <Viewport3D Name="Viewport">
 
                 </Viewport3D>
             </GroupBox>
 
-            <GroupBox Header="Выходная информация" VerticalAlignment="Bottom" MinHeight="300">
-                <RichTextBox Name="RtbOutputInfo" FontFamily="Cascadia Mono" IsReadOnly="True" />
+            <GroupBox Grid.Row="1" Header="Выходная информация">
+                <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Mono" IsReadOnly="True">
+                    <RichTextBox.Resources>
+                        <Style TargetType="{x:Type Paragraph}">
+                            <Setter Property="Margin" Value="0"/>
+                        </Style>
+                    </RichTextBox.Resources>
+                </RichTextBox>
             </GroupBox>
-        </StackPanel>
+        </Grid>
 
         <StackPanel Grid.Column="2">
             <GroupBox Header="Параметры системы">
-                <StackPanel>
-                    <WrapPanel HorizontalAlignment="Right">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="4.5*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <WrapPanel Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right">
                         <Label>Размер системы</Label>
                         <xctk:IntegerUpDown Name="NudSize" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="1000" Increment="1" Value="3"/>
                     </WrapPanel>
 
-                    <CheckBox Name="CbIsDisplacement" HorizontalAlignment="Right" Margin="0 5 0 0"
+                    <CheckBox Grid.Column="1" Grid.Row="1" Name="CbIsDisplacement" HorizontalAlignment="Right" Margin="0 5 0 0"
                               Checked="OnCheckedDisplacement"
                               Unchecked="OnUncheckedDisplacement">
                         Задать смещение атомов?
                     </CheckBox>
 
-                    <WrapPanel HorizontalAlignment="Right">
+                    <WrapPanel Grid.Column="1" Grid.Row="2" HorizontalAlignment="Right">
                         <Label>Величина смещения</Label>
                         <xctk:DoubleUpDown Name="NudDisplacement" TextAlignment="Right" Width="100" Height="25" Minimum="0" Maximum="1" Increment="0.01" Value="0.05"
                                            IsEnabled="False" />
                     </WrapPanel>
-                    
-                    <Button HorizontalAlignment="Right" Height="50" Width="50" Margin="0 5 0 0" 
+
+                    <Button Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Height="50" Width="50"
+                            ToolTip="Создать модель"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnCreateModel">
                         <Image Source="icons/check.png" />
                     </Button>
-                </StackPanel>
+                </Grid>
             </GroupBox>
 
             <GroupBox Header="Параметры моделирования">
@@ -107,18 +129,21 @@
             <GroupBox Header="Панель управления">
                 <WrapPanel HorizontalAlignment="Center" Margin="0 5 0 0">
                     <Button Name="BtnStartCalculation" IsEnabled="False" Width="50" Height="50"
+                            ToolTip="Запуск моделирования"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnStartCalculation">
                         <Image Source="icons/play.png" Width="40" Height="40" />
                     </Button>
                     
                     <Button Name="BtnPauseCalculation" IsEnabled="False" Width="50" Height="50"
+                            ToolTip="Остановка моделирования"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnPauseCalculation">
                         <Image Source="icons/pause.png" Width="40" Height="40" />
                     </Button>
                     
                     <Button Name="BtnResetCalculation" IsEnabled="False" Width="50" Height="50"
+                            ToolTip="Сброс модели"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnResetCalculation">
                         <Image Source="icons/refresh.png" Width="40" Height="40" />
