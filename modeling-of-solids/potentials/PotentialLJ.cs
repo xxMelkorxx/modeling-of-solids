@@ -34,15 +34,6 @@
         private AtomType _type;
 
         /// <summary>
-        /// Конструктор
-        /// </summary>
-        /// <param name="type"></param>
-        public PotentialLJ(AtomType type)
-        {
-            _type = type;
-        }
-
-        /// <summary>
         /// Cила в потенциале Леннарда-Джонса.
         /// </summary>
         /// <param name="args">Массив аргументов: 0 - rij, 1 - dxdydz</param>

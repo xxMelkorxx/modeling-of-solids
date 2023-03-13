@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:cm="clr-namespace:System.ComponentModel;assembly=System"
         xmlns:local="clr-namespace:modeling_of_solids"
 
         mc:Ignorable="d"
@@ -21,27 +22,36 @@
         </Grid.ColumnDefinitions>
 
         <GroupBox Grid.Column="0" Header="Графики энергии системы">
-            <StackPanel>
-                <WpfPlot Name="WpfPlotFe" />
-                <WpfPlot Name="WpfPlotKe" />
-                <WpfPlot Name="WpfPlotPe" />
-                <ProgressBar Name="PbTimeStep" />
-            </StackPanel>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <WpfPlot Grid.Row="0" Name="ChartFe"/>
+                <WpfPlot Grid.Row="1" Name="ChartKe"/>
+                <WpfPlot Grid.Row="2" Name="ChartPe"/>
+            </Grid>
         </GroupBox>
 
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="2*"/>
+                <RowDefinition Height="18*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="10*"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            
+
             <GroupBox Grid.Row="0" Header="Визуализация">
                 <Viewport3D Name="Viewport">
 
                 </Viewport3D>
             </GroupBox>
 
-            <GroupBox Grid.Row="1" Header="Выходная информация">
+            <Slider Grid.Row="1" Name="SliderForViewPort"/>
+
+            <GroupBox Grid.Row="2" Header="Выходная информация">
                 <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Mono" IsReadOnly="True">
                     <RichTextBox.Resources>
                         <Style TargetType="{x:Type Paragraph}">
@@ -50,6 +60,8 @@
                     </RichTextBox.Resources>
                 </RichTextBox>
             </GroupBox>
+
+            <ProgressBar Grid.Row="3" Name="ProgressBar" Margin="5 5 5 5"/>
         </Grid>
 
         <StackPanel Grid.Column="2">
@@ -82,7 +94,9 @@
                                            IsEnabled="False" />
                     </WrapPanel>
 
-                    <Button Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Height="50" Width="50"
+                    <Button Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" 
+                            Name="BtnCreateModel"
+                            Height="50" Width="50"
                             ToolTip="Создать модель"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnCreateModel">
@@ -105,6 +119,12 @@
                         <xctk:IntegerUpDown Name="NudCountStep" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="10000000" Increment="1000" Value="1000" />
                     </WrapPanel>
 
+                    <CheckBox Name="CbIsSnapshot" HorizontalAlignment="Right" Margin="0 5 0 0"
+                              Checked="OnCheckedIsSnapshot"
+                              Unchecked="OnUncheckedIsSnapshot">
+                        Выводить информацию?
+                    </CheckBox>
+
                     <WrapPanel HorizontalAlignment="Right">
                         <Label>Шаг снимков системы</Label>
                         <xctk:IntegerUpDown Name="NudSnapshotStep" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="100000" Increment="1" Value="1" />
@@ -118,7 +138,7 @@
                         <Label>Температура</Label>
                         <xctk:IntegerUpDown Name="NudTemperature" TextAlignment="Right" Width="100" Height="25" Minimum="0" Maximum="10000" Increment="10" Value="300" />
                     </WrapPanel>
-                    
+
                     <WrapPanel HorizontalAlignment="Right">
                         <Label>Шаг перенормировки</Label>
                         <xctk:IntegerUpDown Name="NudStepNorm" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="100" Increment="5" Value="10" />
@@ -134,14 +154,14 @@
                             Click="OnStartCalculation">
                         <Image Source="icons/play.png" Width="40" Height="40" />
                     </Button>
-                    
+
                     <Button Name="BtnPauseCalculation" IsEnabled="False" Width="50" Height="50"
                             ToolTip="Остановка моделирования"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnPauseCalculation">
                         <Image Source="icons/pause.png" Width="40" Height="40" />
                     </Button>
-                    
+
                     <Button Name="BtnResetCalculation" IsEnabled="False" Width="50" Height="50"
                             ToolTip="Сброс модели"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
@@ -152,4 +172,13 @@
             </GroupBox>
         </StackPanel>
     </Grid>
+
+    <Window.Resources>
+        <cm:BackgroundWorker x:Key="backgroundWorkerCreateModel"
+                             WorkerReportsProgress="True"
+                             DoWork="OnBackgroundWorkerDoWorkCreateModel"
+                             RunWorkerCompleted="OnBackgroundWorkerRunWorkerCompletedCreateModel"
+                             ProgressChanged="OnBackgroundWorkerProgressChangedCreateModel"/>
+        <cm:BackgroundWorker x:Key="backgroundWorkerCalculation"/>
+    </Window.Resources>
 </Window>

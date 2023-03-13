@@ -96,7 +96,7 @@ namespace modeling_of_solids
         /// <summary>
         /// Класс потенциала.
         /// </summary>
-        private Potential _potential;
+        private Potential? _potential;
 
         // Параметры симуляции.
         /// <summary>
@@ -120,7 +120,6 @@ namespace modeling_of_solids
         /// </summary>
         private readonly Random _rnd = new(DateTime.Now.Millisecond);
 
-#pragma warning disable CS8618
         /// <summary>
         /// Создание атомной модели.
         /// </summary>
@@ -135,9 +134,13 @@ namespace modeling_of_solids
             Size = size;
             L = size * Lattice;
 
+            // Выбор типа решётки.
             InitPlacement(latticeType);
-            InitPotential(potentialType);
 
+			// Выбор типа потенциала.
+			InitPotential(potentialType);
+
+            // Начальная инициализация параметров.
             InitCalculation();
         }
 
@@ -172,7 +175,7 @@ namespace modeling_of_solids
             switch (potentialType)
             {
                 case PotentialType.LennardJones:
-                    _potential = new PotentialLJ(AtomsType);
+                    _potential = new PotentialLJ() { Type = AtomsType };
                     break;
             }
         }

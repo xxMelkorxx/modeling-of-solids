@@ -65,14 +65,17 @@
 
                     // Вычисление расстояния между частицами.
                     var rij = Separation(atomI.Position, atomJ.Position, out var dxdydz);
-                    
-                    var force = (Vector)_potential.Force(new object[] { rij, dxdydz });
-                    sumForce += force;
-                    atomI.Acceleration += force / WeightAtom;
-                    atomJ.Acceleration -= force / WeightAtom;
-                    
-                    Pe += (double)_potential.PotentialEnergy(new object[] { rij });
-                }
+
+					if (_potential != null)
+                    {
+						var force = (Vector)_potential.Force(new object[] { rij, dxdydz });
+						sumForce += force;
+						atomI.Acceleration += force / WeightAtom;
+						atomJ.Acceleration -= force / WeightAtom;
+
+						Pe += (double)_potential.PotentialEnergy(new object[] { rij });
+					}
+				}
 
                 // Для вычисления давления.
                 _virial += atomI.Position.X * sumForce.X + atomI.Position.Y * sumForce.Y + atomI.Position.Z * sumForce.Z;
