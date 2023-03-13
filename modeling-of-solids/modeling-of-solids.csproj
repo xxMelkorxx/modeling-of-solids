@@ -13,6 +13,7 @@
     <None Remove="icons\check.png" />
     <None Remove="icons\pause.png" />
     <None Remove="icons\play.png" />
+    <None Remove="icons\play_T.png" />
     <None Remove="icons\recycle.png" />
     <None Remove="icons\refresh.png" />
     <None Remove="icons\undo-arrow.png" />
@@ -31,6 +32,7 @@
     <Resource Include="icons\check.png" />
     <Resource Include="icons\pause.png" />
     <Resource Include="icons\play.png" />
+    <Resource Include="icons\play_T.png" />
     <Resource Include="icons\refresh.png" />
     <Resource Include="icons\unn_logo.ico" />
     <Resource Include="icons\unn_logo.png" />

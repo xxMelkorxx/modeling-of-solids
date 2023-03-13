@@ -16,9 +16,9 @@
 
     <Grid Margin="5,0,5,0">
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3.5*" />
+            <ColumnDefinition Width="5*" />
             <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="3*" />
-            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <GroupBox Grid.Column="0" Header="Графики энергии системы">
@@ -147,28 +147,37 @@
             </GroupBox>
 
             <GroupBox Header="Панель управления">
-                <WrapPanel HorizontalAlignment="Center" Margin="0 5 0 0">
-                    <Button Name="BtnStartCalculation" IsEnabled="False" Width="50" Height="50"
+                <StackPanel>
+                    <WrapPanel Margin="0 5 0 0">
+                        <Button Name="BtnStartCalculation" IsEnabled="False" Width="50" Height="50"
                             ToolTip="Запуск моделирования"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnStartCalculation">
-                        <Image Source="icons/play.png" Width="40" Height="40" />
-                    </Button>
+                            <Image Source="icons/play.png" Width="40" Height="40" />
+                        </Button>
+                        <Label VerticalAlignment="Center">Запуск моделирования</Label>
+                    </WrapPanel>
 
-                    <Button Name="BtnPauseCalculation" IsEnabled="False" Width="50" Height="50"
-                            ToolTip="Остановка моделирования"
+                    <WrapPanel>
+                        <Button Name="BtnStartRenormalizationSpeeds" IsEnabled="False" Width="50" Height="50"
+                            ToolTip="Запуск перенормировки скоростей"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
-                            Click="OnPauseCalculation">
-                        <Image Source="icons/pause.png" Width="40" Height="40" />
-                    </Button>
+                            Click="OnStartRenormalizationSpeeds">
+                            <Image Source="icons/play_T.png" Width="40" Height="40" />
+                        </Button>
+                        <Label VerticalAlignment="Center">Запуск перенормировки скоростей</Label>
+                    </WrapPanel>
 
-                    <Button Name="BtnResetCalculation" IsEnabled="False" Width="50" Height="50"
+                    <WrapPanel>
+                        <Button Name="BtnCancelCalculation" IsEnabled="False" Width="50" Height="50"
                             ToolTip="Сброс модели"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
-                            Click="OnResetCalculation">
-                        <Image Source="icons/refresh.png" Width="40" Height="40" />
-                    </Button>
-                </WrapPanel>
+                            Click="OnCancelCalculation">
+                            <Image Source="icons/refresh.png" Width="40" Height="40" />
+                        </Button>
+                        <Label VerticalAlignment="Center">Отмена моделирования</Label>
+                    </WrapPanel>
+                </StackPanel>                               
             </GroupBox>
         </StackPanel>
     </Grid>
@@ -179,6 +188,17 @@
                              DoWork="OnBackgroundWorkerDoWorkCreateModel"
                              RunWorkerCompleted="OnBackgroundWorkerRunWorkerCompletedCreateModel"
                              ProgressChanged="OnBackgroundWorkerProgressChangedCreateModel"/>
-        <cm:BackgroundWorker x:Key="backgroundWorkerCalculation"/>
+        <cm:BackgroundWorker x:Key="backgroundWorkerCalculation"
+                             WorkerReportsProgress="True"
+                             WorkerSupportsCancellation="True"
+                             DoWork="OnBackgroundWorkerDoWorkCalculation"
+                             RunWorkerCompleted="OnBackgroundWorkerRunWorkerCompletedCalculation"
+                             ProgressChanged="OnBackgroundWorkerProgressChangedCalculation"/>
+        <cm:BackgroundWorker x:Key="backgroundWorkerRenormalizationSpeeds"
+                             WorkerReportsProgress="True"
+                             WorkerSupportsCancellation="True"
+                             DoWork="OnBackgroundWorkerDoWorkRenormalizationSpeeds"
+                             RunWorkerCompleted="OnBackgroundWorkerRunWorkerCompletedRenormalizationSpeeds"
+                             ProgressChanged="OnBackgroundWorkerProgressChangedRenormalizationSpeeds"/>
     </Window.Resources>
 </Window>

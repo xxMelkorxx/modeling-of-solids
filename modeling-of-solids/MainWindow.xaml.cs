@@ -1,27 +1,14 @@
-﻿using ScottPlot;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace modeling_of_solids
 {
 	public partial class MainWindow : Window
 	{
-		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
+		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation, _bgWorkerRenormalizationSpeeds;
 		private AtomicModel? _atomicModel;
 		private bool _isDisplacement, _isSnapshot;
 		private int _iter;
@@ -44,20 +31,21 @@ namespace modeling_of_solids
 
 			_bgWorkerCreateModel = (BackgroundWorker)this.FindResource("backgroundWorkerCreateModel");
 			_bgWorkerCalculation = (BackgroundWorker)this.FindResource("backgroundWorkerCalculation");
+			_bgWorkerRenormalizationSpeeds = (BackgroundWorker)this.FindResource("backgroundWorkerRenormalizationSpeeds");
 		}
 
-		private void OnLoadMainWindow(object sender, RoutedEventArgs e)
+		private void OnLoadMainWindow(object? sender, RoutedEventArgs? e)
 		{
 
 		}
 
-		#region ---События создания модели---
+		#region ---СОБЫТИЯ СОЗДАНИЯ МОДЕЛИ---
 		/// <summary>
 		/// Событие создание модели.
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void OnCreateModel(object sender, RoutedEventArgs e)
+		private void OnCreateModel(object? sender, RoutedEventArgs? e)
 		{
 			var size = NudSize.Value ?? 1;
 			var k = NudDisplacement.Value ?? 0;
@@ -104,10 +92,8 @@ namespace modeling_of_solids
 
 				BtnCreateModel.IsEnabled = true;
 				BtnStartCalculation.IsEnabled = true;
-				BtnPauseCalculation.IsEnabled = false;
-				BtnResetCalculation.IsEnabled = false;
-
-				AlarmBeep(1000, 500, 1);
+				BtnStartRenormalizationSpeeds.IsEnabled = true;
+				BtnCancelCalculation.IsEnabled = false;
 			}
 		}
 
@@ -117,28 +103,33 @@ namespace modeling_of_solids
 		}
 		#endregion
 
-		#region ---События панели управления---
+		#region ---СОБЫТИЯ ЗАПУСКА МОДЕЛИРОВАНИЯ---
 		/// <summary>
 		/// Событие запуска/возобновления вычислений.
 		/// </summary>
 		/// <param name="sender"></param>
 		/// <param name="e"></param>
-		private void OnStartCalculation(object sender, RoutedEventArgs e)
+		private void OnStartCalculation(object? sender, RoutedEventArgs? e)
 		{
-			var countStep = NudCountStep.Value;
-			var snapshotStep = NudSnapshotStep.Value;
+			var countStep = NudCountStep.Value ?? 1000;
+			var snapshotStep = NudSnapshotStep.Value ?? 1;
 			var dt = NudTimeStep.Value ?? 1;
 			var dt_order = NudTimeStepOrder.Value ?? -14;
 
 			if (_atomicModel != null)
 				_atomicModel.dt = dt * Math.Pow(10, dt_order);
 
-			BtnPauseCalculation.IsEnabled = true;
-			BtnResetCalculation.IsEnabled = true;
+			BtnStartCalculation.IsEnabled = false;
+			BtnStartRenormalizationSpeeds.IsEnabled = false;
+			BtnCancelCalculation.IsEnabled = true;
 
+			// Очистка графиков.
 			ChartFe.Plot.Clear();
 			ChartKe.Plot.Clear();
 			ChartPe.Plot.Clear();
+
+			// Сброс ProgressBar.
+			ProgressBar.Value = 0;
 
 			// Вывод начальной информации.
 			RtbOutputInfo.AppendText("\n\nЗапуск моделирования...\n");
@@ -149,30 +140,111 @@ namespace modeling_of_solids
 				RtbOutputInfo.AppendText(TableData(_iter - 1));
 			}
 
-
+			// Запуск расчётов.
+			_bgWorkerCalculation.RunWorkerAsync(new FindPrimesInput(new object[] { countStep, snapshotStep }));
 		}
 
-		/// <summary>
-		/// Событие остановки вычислений. 
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void OnPauseCalculation(object sender, RoutedEventArgs e)
+		private void OnBackgroundWorkerDoWorkCalculation(object sender, DoWorkEventArgs e)
 		{
+			// TO DO
 
+			if (_bgWorkerCalculation.CancellationPending)
+			{
+				e.Cancel = true;
+				return;
+			}
 		}
 
-		/// <summary>
-		/// Событие сброса вычислений.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void OnResetCalculation(object sender, RoutedEventArgs e)
+		private void OnBackgroundWorkerRunWorkerCompletedCalculation(object sender, RunWorkerCompletedEventArgs e)
 		{
-			BtnPauseCalculation.IsEnabled = false;
-			BtnResetCalculation.IsEnabled = false;
+			BtnCancelCalculation.IsEnabled = false;
+
+			if (e.Cancelled)
+			{
+				MessageBox.Show("Моделирование отменено");
+				OnCreateModel(null, null);
+			}
+			else if (e.Error != null)
+			{
+				// TO DO
+			}
+		}
+
+		private void OnBackgroundWorkerProgressChangedCalculation(object sender, ProgressChangedEventArgs e)
+		{
+			ProgressBar.Value = e.ProgressPercentage;
 		}
 		#endregion
+
+		#region ---СОБЫТИЯ ПЕРЕНОРМИРОВКИ СКОРОСТЕЙ---
+		/// <summary>
+		/// Событие запуска перенормировки скоростей.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void OnStartRenormalizationSpeeds(object sender, RoutedEventArgs e)
+		{
+			var countStep = NudCountStep.Value ?? 1000;
+			var snapshotStep = NudSnapshotStep.Value ?? 1;
+			var T = NudTemperature.Value ?? 300;
+			var stepNorm = NudStepNorm.Value ?? 100;
+			var dt = NudTimeStep.Value ?? 1;
+			var dt_order = NudTimeStepOrder.Value ?? -14;
+
+			if (_atomicModel != null)
+				_atomicModel.dt = dt * Math.Pow(10, dt_order);
+
+			BtnStartCalculation.IsEnabled = false;
+			BtnStartRenormalizationSpeeds.IsEnabled = false;
+			BtnCancelCalculation.IsEnabled = true;
+
+			//TO DO
+		}
+
+		private void OnBackgroundWorkerDoWorkRenormalizationSpeeds(object sender, DoWorkEventArgs e)
+		{
+			// TO DO
+
+			if (_bgWorkerRenormalizationSpeeds.CancellationPending)
+			{
+				e.Cancel = true;
+				return;
+			}
+		}
+
+		private void OnBackgroundWorkerRunWorkerCompletedRenormalizationSpeeds(object sender, RunWorkerCompletedEventArgs e)
+		{
+			BtnCancelCalculation.IsEnabled = false;
+
+			if (e.Cancelled)
+			{
+				MessageBox.Show("Моделирование отменено");
+				OnCreateModel(null, null);
+			}
+			else if (e.Error != null)
+			{
+
+			}
+		}
+
+		private void OnBackgroundWorkerProgressChangedRenormalizationSpeeds(object sender, ProgressChangedEventArgs e)
+		{
+			ProgressBar.Value = e.ProgressPercentage;
+		}
+		#endregion
+
+		/// <summary>
+		/// Событие отмена вычислений.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private void OnCancelCalculation(object sender, RoutedEventArgs e)
+		{
+			if (_bgWorkerCalculation.IsBusy)
+				_bgWorkerCalculation.CancelAsync();
+			if (_bgWorkerRenormalizationSpeeds.IsBusy)
+				_bgWorkerRenormalizationSpeeds.CancelAsync();
+		}
 
 		private void OnCheckedDisplacement(object sender, RoutedEventArgs e)
 		{
