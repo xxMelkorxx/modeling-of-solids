@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace modeling_of_solids
 {
@@ -12,6 +14,7 @@ namespace modeling_of_solids
 		private AtomicModel? _atomicModel;
 		private bool _isDisplacement, _isSnapshot;
 		private int _iter;
+		//private Mutex mutexObj;
 
 		private class FindPrimesInput
 		{
@@ -54,6 +57,8 @@ namespace modeling_of_solids
 			BtnCreateModel.IsEnabled = false;
 			ProgressBar.Value = 0;
 			RtbOutputInfo.Document.Blocks.Clear();
+
+			AlarmBeep(500, 500, 1);
 
 			_bgWorkerCreateModel.RunWorkerAsync(new FindPrimesInput(new object[] { size, k }));
 		}
@@ -122,6 +127,7 @@ namespace modeling_of_solids
 			BtnStartCalculation.IsEnabled = false;
 			BtnStartRenormalizationSpeeds.IsEnabled = false;
 			BtnCancelCalculation.IsEnabled = true;
+			BtnPauseCalculation.IsEnabled = true;
 
 			// Очистка графиков.
 			ChartFe.Plot.Clear();
@@ -147,12 +153,27 @@ namespace modeling_of_solids
 		private void OnBackgroundWorkerDoWorkCalculation(object sender, DoWorkEventArgs e)
 		{
 			// TO DO
-
+			//mutexObj = new();
 			if (_bgWorkerCalculation.CancellationPending)
 			{
 				e.Cancel = true;
+				//mutexObj.ReleaseMutex();
+				
 				return;
 			}
+			else
+			{
+				for (int i = 0; i < 1e3; i++)
+				{
+					Application.Current.Dispatcher.Invoke(
+					DispatcherPriority.Background,
+					() => {
+						RtbOutputInfo.AppendText(i.ToString());
+						RtbOutputInfo.ScrollToEnd();
+					});
+				}
+			}
+			//mutexObj.ReleaseMutex();
 		}
 
 		private void OnBackgroundWorkerRunWorkerCompletedCalculation(object sender, RunWorkerCompletedEventArgs e)
@@ -166,6 +187,7 @@ namespace modeling_of_solids
 			}
 			else if (e.Error != null)
 			{
+				RtbOutputInfo.AppendText("End!");
 				// TO DO
 			}
 		}
@@ -244,6 +266,11 @@ namespace modeling_of_solids
 				_bgWorkerCalculation.CancelAsync();
 			if (_bgWorkerRenormalizationSpeeds.IsBusy)
 				_bgWorkerRenormalizationSpeeds.CancelAsync();
+		}
+
+		private void OnPauseCalculation(object sender, RoutedEventArgs e)
+		{
+			//mutexObj.WaitOne();
 		}
 
 		private void OnCheckedDisplacement(object sender, RoutedEventArgs e)

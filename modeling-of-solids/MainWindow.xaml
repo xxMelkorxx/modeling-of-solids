@@ -8,9 +8,9 @@
         xmlns:local="clr-namespace:modeling_of_solids"
 
         mc:Ignorable="d"
-        Title="ННГУ ИСИТ | Моделирование методом молекулярной динамики" 
+        Title="ННГУ ИСИТ | Моделирование методом молекулярной динамики"
+        Icon="/icons/unn_logo.ico"
         WindowState="Maximized" 
-        Icon="/icons/unn_logo.ico" 
         FontSize="14" FontFamily="Segoe UI Semibold"
         Loaded="OnLoadMainWindow">
 
@@ -52,7 +52,7 @@
             <Slider Grid.Row="1" Name="SliderForViewPort"/>
 
             <GroupBox Grid.Row="2" Header="Выходная информация">
-                <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Mono" IsReadOnly="True">
+                <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Mono" IsReadOnly="True" VerticalScrollBarVisibility="Visible">
                     <RichTextBox.Resources>
                         <Style TargetType="{x:Type Paragraph}">
                             <Setter Property="Margin" Value="0"/>
@@ -176,6 +176,16 @@
                             <Image Source="icons/refresh.png" Width="40" Height="40" />
                         </Button>
                         <Label VerticalAlignment="Center">Отмена моделирования</Label>
+                    </WrapPanel>
+
+                    <WrapPanel>
+                        <Button Name="BtnPauseCalculation" IsEnabled="False" Width="50" Height="50"
+                            ToolTip="Сброс модели"
+                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                            Click="OnPauseCalculation">
+                            <Image Source="icons/pause.png" Width="40" Height="40" />
+                        </Button>
+                        <Label VerticalAlignment="Center">Приостановить моделирование</Label>
                     </WrapPanel>
                 </StackPanel>                               
             </GroupBox>
