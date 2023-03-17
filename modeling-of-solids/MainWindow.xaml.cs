@@ -18,13 +18,13 @@ namespace modeling_of_solids
 
 		private class FindPrimesInput
 		{
-			public List<object> args;
+			public List<object> Args;
 
 			public FindPrimesInput(object[] args)
 			{
-				this.args = new List<object>();
+				this.Args = new List<object>();
 				foreach (var arg in args)
-					this.args.Add(arg);
+					this.Args.Add(arg);
 			}
 		}
 
@@ -65,9 +65,9 @@ namespace modeling_of_solids
 
 		private void OnBackgroundWorkerDoWorkCreateModel(object sender, DoWorkEventArgs e)
 		{
-			FindPrimesInput input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
-			var size = (int)input.args[0];
-			var k = (double)input.args[1];
+			var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
+			var size = (int)input.Args[0];
+			var k = (double)input.Args[1];
 			_bgWorkerCreateModel.ReportProgress(25);
 
 			// Инициализация системы.
@@ -119,10 +119,10 @@ namespace modeling_of_solids
 			var countStep = NudCountStep.Value ?? 1000;
 			var snapshotStep = NudSnapshotStep.Value ?? 1;
 			var dt = NudTimeStep.Value ?? 1;
-			var dt_order = NudTimeStepOrder.Value ?? -14;
+			var dtOrder = NudTimeStepOrder.Value ?? -14;
 
 			if (_atomicModel != null)
-				_atomicModel.dt = dt * Math.Pow(10, dt_order);
+				_atomicModel.dt = dt * Math.Pow(10, dtOrder);
 
 			BtnStartCalculation.IsEnabled = false;
 			BtnStartRenormalizationSpeeds.IsEnabled = false;
@@ -140,40 +140,41 @@ namespace modeling_of_solids
 			// Вывод начальной информации.
 			RtbOutputInfo.AppendText("\n\nЗапуск моделирования...\n");
 			RtbOutputInfo.AppendText("Количество временных шагов: " + countStep + "\n");
-			if (_isSnapshot)
-			{
-				RtbOutputInfo.AppendText(TableHeader());
-				RtbOutputInfo.AppendText(TableData(_iter - 1));
-			}
-
+			RtbOutputInfo.AppendText(TableHeader());
+			RtbOutputInfo.AppendText(TableData(_iter - 1));
+			
 			// Запуск расчётов.
 			_bgWorkerCalculation.RunWorkerAsync(new FindPrimesInput(new object[] { countStep, snapshotStep }));
 		}
 
 		private void OnBackgroundWorkerDoWorkCalculation(object sender, DoWorkEventArgs e)
 		{
-			// TO DO
-			//mutexObj = new();
-			if (_bgWorkerCalculation.CancellationPending)
+			if (_atomicModel == null)
+				throw new Exception("atomicModel is null");
+			
+			var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
+			var countStep = (int)input.Args[0];
+			var snapshotStep = (int)input.Args[1];
+			
+			for (var i = _iter; i - _iter < countStep; i++)
 			{
-				e.Cancel = true;
-				//mutexObj.ReleaseMutex();
+				if (_bgWorkerCalculation.CancellationPending)
+				{
+					e.Cancel = true;
+					return;
+				}
 				
-				return;
-			}
-			else
-			{
-				for (int i = 0; i < 1e3; i++)
+				_atomicModel.Verlet();
+				if (_isSnapshot && (i % snapshotStep == 0 || i == _iter + countStep - 1))
 				{
 					Application.Current.Dispatcher.Invoke(
-					DispatcherPriority.Background,
-					() => {
-						RtbOutputInfo.AppendText(i.ToString());
-						RtbOutputInfo.ScrollToEnd();
-					});
+						DispatcherPriority.Background, 
+						() => {
+							RtbOutputInfo.AppendText(TableData(i));
+							RtbOutputInfo.ScrollToEnd();
+						});
 				}
 			}
-			//mutexObj.ReleaseMutex();
 		}
 
 		private void OnBackgroundWorkerRunWorkerCompletedCalculation(object sender, RunWorkerCompletedEventArgs e)
@@ -187,8 +188,7 @@ namespace modeling_of_solids
 			}
 			else if (e.Error != null)
 			{
-				RtbOutputInfo.AppendText("End!");
-				// TO DO
+				
 			}
 		}
 
@@ -211,10 +211,10 @@ namespace modeling_of_solids
 			var T = NudTemperature.Value ?? 300;
 			var stepNorm = NudStepNorm.Value ?? 100;
 			var dt = NudTimeStep.Value ?? 1;
-			var dt_order = NudTimeStepOrder.Value ?? -14;
+			var dtOrder = NudTimeStepOrder.Value ?? -14;
 
 			if (_atomicModel != null)
-				_atomicModel.dt = dt * Math.Pow(10, dt_order);
+				_atomicModel.dt = dt * Math.Pow(10, dtOrder);
 
 			BtnStartCalculation.IsEnabled = false;
 			BtnStartRenormalizationSpeeds.IsEnabled = false;
@@ -270,7 +270,7 @@ namespace modeling_of_solids
 
 		private void OnPauseCalculation(object sender, RoutedEventArgs e)
 		{
-			//mutexObj.WaitOne();
+			
 		}
 
 		private void OnCheckedDisplacement(object sender, RoutedEventArgs e)
