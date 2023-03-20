@@ -137,8 +137,8 @@ namespace modeling_of_solids
             // Выбор типа решётки.
             InitPlacement(latticeType);
 
-			// Выбор типа потенциала.
-			InitPotential(potentialType);
+            // Выбор типа потенциала.
+            InitPotential(potentialType);
 
             // Начальная инициализация параметров.
             InitCalculation();
@@ -175,7 +175,7 @@ namespace modeling_of_solids
             switch (potentialType)
             {
                 case PotentialType.LennardJones:
-                    _potential = new PotentialLJ() { Type = AtomsType };
+                    _potential = new PotentialLJ { Type = AtomsType };
                     break;
             }
         }

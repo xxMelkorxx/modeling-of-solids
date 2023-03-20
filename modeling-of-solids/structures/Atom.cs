@@ -5,7 +5,7 @@
 		Ar
 	}
 
-	public struct Atom
+	public class Atom
 	{
 		/// <summary>
 		/// Идентификатор.

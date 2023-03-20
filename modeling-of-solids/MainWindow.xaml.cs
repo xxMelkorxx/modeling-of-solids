@@ -8,361 +8,341 @@ using System.Windows.Threading;
 
 namespace modeling_of_solids
 {
-	public partial class MainWindow : Window
-	{
-		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation, _bgWorkerRenormalizationSpeeds;
-		private AtomicModel? _atomicModel;
-		private bool _isDisplacement, _isSnapshot;
-		private int _iter;
-		//private Mutex mutexObj;
+    public partial class MainWindow : Window
+    {
+        private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
+        private AtomicModel? _atomicModel;
+        private bool _isDisplacement, _isSnapshot, _isRenormSpeeds;
 
-		private class FindPrimesInput
-		{
-			public List<object> Args;
+        private int _iter;
+        //private Mutex mutexObj;
 
-			public FindPrimesInput(object[] args)
-			{
-				this.Args = new List<object>();
-				foreach (var arg in args)
-					this.Args.Add(arg);
-			}
-		}
+        private class FindPrimesInput
+        {
+            public List<object> Args;
 
-		public MainWindow()
-		{
-			InitializeComponent();
+            public FindPrimesInput(object[] args)
+            {
+                this.Args = new List<object>();
+                foreach (var arg in args)
+                    this.Args.Add(arg);
+            }
+        }
 
-			_bgWorkerCreateModel = (BackgroundWorker)this.FindResource("backgroundWorkerCreateModel");
-			_bgWorkerCalculation = (BackgroundWorker)this.FindResource("backgroundWorkerCalculation");
-			_bgWorkerRenormalizationSpeeds = (BackgroundWorker)this.FindResource("backgroundWorkerRenormalizationSpeeds");
-		}
+        public MainWindow()
+        {
+            InitializeComponent();
 
-		private void OnLoadMainWindow(object? sender, RoutedEventArgs? e)
-		{
+            _bgWorkerCreateModel = (BackgroundWorker)this.FindResource("backgroundWorkerCreateModel");
+            _bgWorkerCalculation = (BackgroundWorker)this.FindResource("backgroundWorkerCalculation");
+        }
 
-		}
+        private void OnLoadMainWindow(object? sender, RoutedEventArgs? e)
+        {
+        }
 
-		#region ---СОБЫТИЯ СОЗДАНИЯ МОДЕЛИ---
-		/// <summary>
-		/// Событие создание модели.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void OnCreateModel(object? sender, RoutedEventArgs? e)
-		{
-			var size = NudSize.Value ?? 1;
-			var k = NudDisplacement.Value ?? 0;
-			_iter = 1;
+        #region ---СОБЫТИЯ СОЗДАНИЯ МОДЕЛИ---
 
-			BtnCreateModel.IsEnabled = false;
-			ProgressBar.Value = 0;
-			RtbOutputInfo.Document.Blocks.Clear();
+        /// <summary>
+        /// Событие создание модели.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnCreateModel(object? sender, RoutedEventArgs? e)
+        {
+            var size = NudSize.Value ?? 1;
+            var k = NudDisplacement.Value ?? 0;
+            _iter = 1;
 
-			AlarmBeep(500, 500, 1);
+            BtnCreateModel.IsEnabled = false;
+            ProgressBar.Value = 0;
+            RtbOutputInfo.Document.Blocks.Clear();
 
-			_bgWorkerCreateModel.RunWorkerAsync(new FindPrimesInput(new object[] { size, k }));
-		}
+            _bgWorkerCreateModel.RunWorkerAsync(new FindPrimesInput(new object[] { size, k }));
+        }
 
-		private void OnBackgroundWorkerDoWorkCreateModel(object sender, DoWorkEventArgs e)
-		{
-			var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
-			var size = (int)input.Args[0];
-			var k = (double)input.Args[1];
-			_bgWorkerCreateModel.ReportProgress(25);
+        private void OnBackgroundWorkerDoWorkCreateModel(object sender, DoWorkEventArgs e)
+        {
+            var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
+            var size = (int)input.Args[0];
+            var k = (double)input.Args[1];
+            _bgWorkerCreateModel.ReportProgress(25);
 
-			// Инициализация системы.
-			_atomicModel = new AtomicModel(size, AtomType.Ar, LatticeType.FCC, PotentialType.LennardJones);
-			_bgWorkerCreateModel.ReportProgress(50);
+            // Инициализация системы.
+            _atomicModel = new AtomicModel(size, AtomType.Ar, LatticeType.FCC, PotentialType.LennardJones);
+            _bgWorkerCreateModel.ReportProgress(50);
 
-			// Применение случайного смещения для атомов.
-			if (_isDisplacement)
-			{
-				_atomicModel.AtomsDisplacement(k);
-				_bgWorkerCreateModel.ReportProgress(75);
-			}
+            // Применение случайного смещения для атомов.
+            if (_isDisplacement)
+            {
+                _atomicModel.AtomsDisplacement(k);
+                _bgWorkerCreateModel.ReportProgress(75);
+            }
 
-			// Вычисление начальных параметров системы.
-			_atomicModel.InitCalculation();
-			_bgWorkerCreateModel.ReportProgress(100);
-		}
+            // Вычисление начальных параметров системы.
+            _atomicModel.InitCalculation();
+            _bgWorkerCreateModel.ReportProgress(100);
+        }
 
-		private void OnBackgroundWorkerRunWorkerCompletedCreateModel(object sender, RunWorkerCompletedEventArgs e)
-		{
-			if (e.Error != null)
-				MessageBox.Show(e.Error.Message, "Произошла ошибка");
-			else
-			{
-				// Вывод начальной информации.
-				RtbOutputInfo.AppendText(InitInfoSystem());
+        private void OnBackgroundWorkerRunWorkerCompletedCreateModel(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Error != null)
+                MessageBox.Show(e.Error.Message, "Произошла ошибка");
+            else
+            {
+                // Вывод начальной информации.
+                RtbOutputInfo.AppendText(InitInfoSystem());
 
-				BtnCreateModel.IsEnabled = true;
-				BtnStartCalculation.IsEnabled = true;
-				BtnStartRenormalizationSpeeds.IsEnabled = true;
-				BtnCancelCalculation.IsEnabled = false;
-			}
-		}
+                BtnCreateModel.IsEnabled = true;
+                BtnStartCalculation.IsEnabled = true;
+                BtnCancelCalculation.IsEnabled = false;
+                BtnPauseCalculation.IsEnabled = false;
+            }
+        }
 
-		private void OnBackgroundWorkerProgressChangedCreateModel(object sender, ProgressChangedEventArgs e)
-		{
-			ProgressBar.Value = e.ProgressPercentage;
-		}
-		#endregion
+        private void OnBackgroundWorkerProgressChangedCreateModel(object sender, ProgressChangedEventArgs e)
+        {
+            ProgressBar.Value = e.ProgressPercentage;
+        }
 
-		#region ---СОБЫТИЯ ЗАПУСКА МОДЕЛИРОВАНИЯ---
-		/// <summary>
-		/// Событие запуска/возобновления вычислений.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void OnStartCalculation(object? sender, RoutedEventArgs? e)
-		{
-			var countStep = NudCountStep.Value ?? 1000;
-			var snapshotStep = NudSnapshotStep.Value ?? 1;
-			var dt = NudTimeStep.Value ?? 1;
-			var dtOrder = NudTimeStepOrder.Value ?? -14;
+        #endregion
 
-			if (_atomicModel != null)
-				_atomicModel.dt = dt * Math.Pow(10, dtOrder);
+        #region ---СОБЫТИЯ ЗАПУСКА МОДЕЛИРОВАНИЯ---
 
-			BtnStartCalculation.IsEnabled = false;
-			BtnStartRenormalizationSpeeds.IsEnabled = false;
-			BtnCancelCalculation.IsEnabled = true;
-			BtnPauseCalculation.IsEnabled = true;
+        /// <summary>
+        /// Событие запуска/возобновления вычислений.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnStartCalculation(object? sender, RoutedEventArgs? e)
+        {
+            var countStep = NudCountStep.Value ?? 1000;
+            var snapshotStep = NudSnapshotStep.Value ?? 1;
+            var T = NudTemperature.Value ?? 300;
+            var stepNorm = NudStepNorm.Value ?? 100;
+            var dt = NudTimeStep.Value ?? 1;
+            var dtOrder = NudTimeStepOrder.Value ?? -14;
 
-			// Очистка графиков.
-			ChartFe.Plot.Clear();
-			ChartKe.Plot.Clear();
-			ChartPe.Plot.Clear();
+            if (_atomicModel != null)
+                _atomicModel.dt = dt * Math.Pow(10, dtOrder);
 
-			// Сброс ProgressBar.
-			ProgressBar.Value = 0;
+            BtnStartCalculation.IsEnabled = false;
+            BtnCancelCalculation.IsEnabled = true;
+            BtnPauseCalculation.IsEnabled = true;
 
-			// Вывод начальной информации.
-			RtbOutputInfo.AppendText("\n\nЗапуск моделирования...\n");
-			RtbOutputInfo.AppendText("Количество временных шагов: " + countStep + "\n");
-			RtbOutputInfo.AppendText(TableHeader());
-			RtbOutputInfo.AppendText(TableData(_iter - 1));
-			
-			// Запуск расчётов.
-			_bgWorkerCalculation.RunWorkerAsync(new FindPrimesInput(new object[] { countStep, snapshotStep }));
-		}
+            // Очистка графиков.
+            ChartFe.Plot.Clear();
+            ChartKe.Plot.Clear();
+            ChartPe.Plot.Clear();
 
-		private void OnBackgroundWorkerDoWorkCalculation(object sender, DoWorkEventArgs e)
-		{
-			if (_atomicModel == null)
-				throw new Exception("atomicModel is null");
-			
-			var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
-			var countStep = (int)input.Args[0];
-			var snapshotStep = (int)input.Args[1];
-			
-			for (var i = _iter; i - _iter < countStep; i++)
-			{
-				if (_bgWorkerCalculation.CancellationPending)
-				{
-					e.Cancel = true;
-					return;
-				}
-				
-				_atomicModel.Verlet();
-				if (_isSnapshot && (i % snapshotStep == 0 || i == _iter + countStep - 1))
-				{
-					Application.Current.Dispatcher.Invoke(
-						DispatcherPriority.Background, 
-						() => {
-							RtbOutputInfo.AppendText(TableData(i));
-							RtbOutputInfo.ScrollToEnd();
-						});
-				}
-			}
-		}
+            // Сброс ProgressBar.
+            ProgressBar.Value = 0;
 
-		private void OnBackgroundWorkerRunWorkerCompletedCalculation(object sender, RunWorkerCompletedEventArgs e)
-		{
-			BtnCancelCalculation.IsEnabled = false;
+            // Вывод начальной информации.
+            RtbOutputInfo.AppendText(_isRenormSpeeds ? "\n\nЗапуск перенормировки скоростей...\n" : "\n\nЗапуск моделирования...\n");
+            RtbOutputInfo.AppendText("Количество временных шагов: " + countStep + "\n" + (_isRenormSpeeds ? "Шаг перенормировки: " + stepNorm + "\n" : ""));
+            RtbOutputInfo.AppendText(TableHeader());
+            RtbOutputInfo.AppendText(TableData(_iter - 1));
 
-			if (e.Cancelled)
-			{
-				MessageBox.Show("Моделирование отменено");
-				OnCreateModel(null, null);
-			}
-			else if (e.Error != null)
-			{
-				
-			}
-		}
+            // Запуск расчётов.
+            _bgWorkerCalculation.RunWorkerAsync(new FindPrimesInput(new object[] { countStep, snapshotStep, T, stepNorm }));
+        }
 
-		private void OnBackgroundWorkerProgressChangedCalculation(object sender, ProgressChangedEventArgs e)
-		{
-			ProgressBar.Value = e.ProgressPercentage;
-		}
-		#endregion
+        private void OnBackgroundWorkerDoWorkCalculation(object sender, DoWorkEventArgs e)
+        {
+            if (_atomicModel == null)
+                throw new Exception("atomicModel is null");
 
-		#region ---СОБЫТИЯ ПЕРЕНОРМИРОВКИ СКОРОСТЕЙ---
-		/// <summary>
-		/// Событие запуска перенормировки скоростей.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void OnStartRenormalizationSpeeds(object sender, RoutedEventArgs e)
-		{
-			var countStep = NudCountStep.Value ?? 1000;
-			var snapshotStep = NudSnapshotStep.Value ?? 1;
-			var T = NudTemperature.Value ?? 300;
-			var stepNorm = NudStepNorm.Value ?? 100;
-			var dt = NudTimeStep.Value ?? 1;
-			var dtOrder = NudTimeStepOrder.Value ?? -14;
+            var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
+            var countStep = (int)input.Args[0];
+            var snapshotStep = (int)input.Args[1];
+            var T = (int)input.Args[2];
+            var stepNorm = (int)input.Args[3];
 
-			if (_atomicModel != null)
-				_atomicModel.dt = dt * Math.Pow(10, dtOrder);
+            if (_isRenormSpeeds)
+            {
+                _atomicModel.InitVelocityNormalization(T);
+                _atomicModel.PulseZeroing();
+            }
+            
+            for (var i = _iter; i - _iter < countStep; i++)
+            {
+                if (_bgWorkerCalculation.CancellationPending)
+                {
+                    e.Cancel = true;
+                    return;
+                }
 
-			BtnStartCalculation.IsEnabled = false;
-			BtnStartRenormalizationSpeeds.IsEnabled = false;
-			BtnCancelCalculation.IsEnabled = true;
+                _atomicModel.Verlet();
+                if (_isRenormSpeeds && i % stepNorm == 0)
+                {
+                    _atomicModel.VelocityNormalization(T);
+                    _atomicModel.PulseZeroing();
+                    Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, () => RtbOutputInfo.AppendText("Перенормировка...\n"));
+                }
 
-			//TO DO
-		}
+                var ii = i;
+                Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, () =>
+                {
+                    if ((_isSnapshot && ii % snapshotStep == 0) || ii == _iter + countStep - 1)
+                    {
+                        RtbOutputInfo.AppendText(TableData(ii));
+                        RtbOutputInfo.ScrollToEnd();
+                    }
+                    
+                    ChartKe.Plot.AddPoint(ii, _atomicModel.Ke);
+                    ChartPe.Plot.AddPoint(ii, _atomicModel.Pe);
+                    ChartFe.Plot.AddPoint(ii, _atomicModel.Fe);
+                });
 
-		private void OnBackgroundWorkerDoWorkRenormalizationSpeeds(object sender, DoWorkEventArgs e)
-		{
-			// TO DO
+                _bgWorkerCalculation.ReportProgress((int)((double)i / countStep * 100));
+            }
 
-			if (_bgWorkerRenormalizationSpeeds.CancellationPending)
-			{
-				e.Cancel = true;
-				return;
-			}
-		}
+            _iter += countStep;
+        }
 
-		private void OnBackgroundWorkerRunWorkerCompletedRenormalizationSpeeds(object sender, RunWorkerCompletedEventArgs e)
-		{
-			BtnCancelCalculation.IsEnabled = false;
+        private void OnBackgroundWorkerRunWorkerCompletedCalculation(object sender, RunWorkerCompletedEventArgs e)
+        {
+            BtnStartCalculation.IsEnabled = true;
+            BtnCancelCalculation.IsEnabled = false;
+            
+            if (e.Cancelled)
+            {
+                MessageBox.Show("Моделирование отменено");
+                //OnCreateModel(null, null);
+            }
+            else if (e.Error != null)
+                MessageBox.Show(e.Error.Message, "Произошла ошибка");
+        }
 
-			if (e.Cancelled)
-			{
-				MessageBox.Show("Моделирование отменено");
-				OnCreateModel(null, null);
-			}
-			else if (e.Error != null)
-			{
+        private void OnBackgroundWorkerProgressChangedCalculation(object sender, ProgressChangedEventArgs e)
+        {
+            ProgressBar.Value = e.ProgressPercentage;
+        }
 
-			}
-		}
+        #endregion
 
-		private void OnBackgroundWorkerProgressChangedRenormalizationSpeeds(object sender, ProgressChangedEventArgs e)
-		{
-			ProgressBar.Value = e.ProgressPercentage;
-		}
-		#endregion
+        /// <summary>
+        /// Событие отмена вычислений.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnCancelCalculation(object sender, RoutedEventArgs e)
+        {
+            if (_bgWorkerCalculation.IsBusy)
+                _bgWorkerCalculation.CancelAsync();
+        }
 
-		/// <summary>
-		/// Событие отмена вычислений.
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void OnCancelCalculation(object sender, RoutedEventArgs e)
-		{
-			if (_bgWorkerCalculation.IsBusy)
-				_bgWorkerCalculation.CancelAsync();
-			if (_bgWorkerRenormalizationSpeeds.IsBusy)
-				_bgWorkerRenormalizationSpeeds.CancelAsync();
-		}
+        private void OnPauseCalculation(object sender, RoutedEventArgs e)
+        {
+        }
 
-		private void OnPauseCalculation(object sender, RoutedEventArgs e)
-		{
-			
-		}
+        private void OnCheckedDisplacement(object sender, RoutedEventArgs e)
+        {
+            _isDisplacement = true;
+            NudDisplacement.IsEnabled = true;
+        }
 
-		private void OnCheckedDisplacement(object sender, RoutedEventArgs e)
-		{
-			_isDisplacement = true;
-			NudDisplacement.IsEnabled = true;
-		}
+        private void OnUncheckedDisplacement(object sender, RoutedEventArgs e)
+        {
+            _isDisplacement = false;
+            NudDisplacement.IsEnabled = false;
+        }
 
-		private void OnUncheckedDisplacement(object sender, RoutedEventArgs e)
-		{
-			_isDisplacement = false;
-			NudDisplacement.IsEnabled = false;
-		}
+        private void OnCheckedIsSnapshot(object sender, RoutedEventArgs e)
+        {
+            _isSnapshot = true;
+            NudSnapshotStep.IsEnabled = true;
+        }
 
-		private void OnCheckedIsSnapshot(object sender, RoutedEventArgs e)
-		{
-			_isSnapshot = true;
-			NudSnapshotStep.IsEnabled = true;
-		}
+        private void OnUncheckedIsSnapshot(object sender, RoutedEventArgs e)
+        {
+            _isSnapshot = false;
+            NudSnapshotStep.IsEnabled = false;
+        }
 
-		private void OnUncheckedIsSnapshot(object sender, RoutedEventArgs e)
-		{
-			_isSnapshot = false;
-			NudSnapshotStep.IsEnabled = false;
-		}
+        private void OnCheckedIsRenormSpeeds(object sender, RoutedEventArgs e)
+        {
+            _isRenormSpeeds = true;
+            NudTemperature.IsEnabled = true;
+            NudStepNorm.IsEnabled = true;
+        }
 
-		#region ---Вспомогательные методы---
-		/// <summary>
-		/// Начальная информация о системе.
-		/// </summary>
-		/// <returns></returns>
-		private string InitInfoSystem()
-		{
-			var text = "Структура создана...\n";
-			if (_atomicModel != null)
-			{
-				text += string.Format("Тип атомов - {0}\n", _atomicModel.AtomsType);
-				text += string.Format("Размер структуры (Nx/Ny) - {0}/{0}\n", _atomicModel.Size);
-				text += string.Format("Размер структуры (Lx/Ly) - {0}/{0} нм\n", _atomicModel.L);
-				text += string.Format("Число атомов - {0}\n", _atomicModel.CountAtoms);
-				text += string.Format("Параметр решётки - {0} нм\n", _atomicModel.Lattice);
-				text += string.Format("Кинетическая энергия - {0} эВ\n", _atomicModel.Ke.ToString("F5"));
-				text += string.Format("Потенциальная энергия - {0} эВ\n", _atomicModel.Pe.ToString("F5"));
-				text += string.Format("Полная энергия - {0} эВ\n", _atomicModel.Fe.ToString("F5"));
-				text += string.Format("Температура - {0} К\n", _atomicModel.T.ToString("F1"));
-				return text;
-			}
-			else throw new NullReferenceException("Class AtomicModel не инициализирован!");
-		}
+        private void OnUncheckedIsRenormSpeeds(object sender, RoutedEventArgs e)
+        {
+            _isRenormSpeeds = false;
+            NudTemperature.IsEnabled = false;
+            NudStepNorm.IsEnabled = false;
+        }
 
-		/// <summary>
-		/// Заголовок таблицы.
-		/// </summary>
-		/// <returns></returns>
-		private static string TableHeader()
-		{
-			return string.Format("{0} |{1} |{2} |{3} |{4} |\n",
-				"Шаг".PadLeft(6),
-				"Кин. энергия (эВ)".PadLeft(18),
-				"Пот. энергия (эВ)".PadLeft(18),
-				"Полн. энергия (эВ)".PadLeft(19),
-				"Температура (К)".PadLeft(16));
-		}
+        #region ---Вспомогательные методы---
 
-		/// <summary>
-		/// Вывод данных в таблицу.
-		/// </summary>
-		/// <param name="i"></param>
-		/// <returns></returns>
-		private string TableData(int i)
-		{
-			if (_atomicModel != null)
-				return string.Format("{0} |{1} |{2} |{3} |{4} |\n",
-					i.ToString().PadLeft(6),
-					_atomicModel.Ke.ToString("F5").PadLeft(18),
-					_atomicModel.Pe.ToString("F5").PadLeft(18),
-					_atomicModel.Fe.ToString("F5").PadLeft(19),
-					_atomicModel.T.ToString("F1").PadLeft(16));
-			else throw new NullReferenceException("Class AtomicModel не инициализирован!");
-		}
+        /// <summary>
+        /// Начальная информация о системе.
+        /// </summary>
+        /// <returns></returns>
+        private string InitInfoSystem()
+        {
+            var text = "Структура создана...\n";
+            if (_atomicModel != null)
+            {
+                text += string.Format("Тип атомов - {0}\n", _atomicModel.AtomsType);
+                text += string.Format("Размер структуры (Nx/Ny) - {0}/{0}\n", _atomicModel.Size);
+                text += string.Format("Размер структуры (Lx/Ly) - {0}/{0} нм\n", _atomicModel.L);
+                text += string.Format("Число атомов - {0}\n", _atomicModel.CountAtoms);
+                text += string.Format("Параметр решётки - {0} нм\n", _atomicModel.Lattice);
+                text += string.Format("Кинетическая энергия - {0} эВ\n", _atomicModel.Ke.ToString("F5"));
+                text += string.Format("Потенциальная энергия - {0} эВ\n", _atomicModel.Pe.ToString("F5"));
+                text += string.Format("Полная энергия - {0} эВ\n", _atomicModel.Fe.ToString("F5"));
+                text += string.Format("Температура - {0} К\n", _atomicModel.T.ToString("F1"));
+                return text;
+            }
+            else throw new NullReferenceException("Class AtomicModel не инициализирован!");
+        }
 
-		/// <summary>
-		/// Звуковой сигнал.
-		/// </summary>
-		/// <param name="freq">Частота сигнала.</param>
-		/// <param name="duration">Длительность сигнала (мкс).</param>
-		/// <param name="count">Повторений.</param>
-		private static void AlarmBeep(int freq, int duration, int count)
-		{
-			for (var i = 0; i < count; i++)
-				Console.Beep(freq, duration);
-		}
-		#endregion
-	}
+        /// <summary>
+        /// Заголовок таблицы.
+        /// </summary>
+        /// <returns></returns>
+        private static string TableHeader()
+        {
+            return string.Format("{0} |{1} |{2} |{3} |{4} |\n",
+                "Шаг".PadLeft(6),
+                "Кин. энергия (эВ)".PadLeft(18),
+                "Пот. энергия (эВ)".PadLeft(18),
+                "Полн. энергия (эВ)".PadLeft(19),
+                "Температура (К)".PadLeft(16));
+        }
+
+        /// <summary>
+        /// Вывод данных в таблицу.
+        /// </summary>
+        /// <param name="i"></param>
+        /// <returns></returns>
+        private string TableData(int i)
+        {
+            if (_atomicModel != null)
+                return string.Format("{0} |{1} |{2} |{3} |{4} |\n",
+                    i.ToString().PadLeft(6),
+                    _atomicModel.Ke.ToString("F5").PadLeft(18),
+                    _atomicModel.Pe.ToString("F5").PadLeft(18),
+                    _atomicModel.Fe.ToString("F5").PadLeft(19),
+                    _atomicModel.T.ToString("F1").PadLeft(16));
+            else throw new NullReferenceException("Class AtomicModel не инициализирован!");
+        }
+
+        /// <summary>
+        /// Звуковой сигнал.
+        /// </summary>
+        /// <param name="freq">Частота сигнала.</param>
+        /// <param name="duration">Длительность сигнала (мкс).</param>
+        /// <param name="count">Повторений.</param>
+        private static void AlarmBeep(int freq, int duration, int count)
+        {
+            for (var i = 0; i < count; i++)
+                Console.Beep(freq, duration);
+        }
+
+        #endregion
+    }
 }

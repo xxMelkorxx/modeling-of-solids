@@ -129,21 +129,36 @@
 
                     <WrapPanel HorizontalAlignment="Right">
                         <Label>Шаг снимков системы</Label>
-                        <xctk:IntegerUpDown Name="NudSnapshotStep" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="100000" Increment="1" Value="1" />
+                        <xctk:IntegerUpDown Name="NudSnapshotStep" 
+                                            TextAlignment="Right" Width="100" Height="25" 
+                                            Minimum="1" Maximum="100000" Increment="1" Value="10"/>
                     </WrapPanel>
                 </StackPanel>
             </GroupBox>
 
             <GroupBox Header="Параметры перенормироваки скоростей">
                 <StackPanel>
+                    <CheckBox Margin="0 5 0 0"
+                              HorizontalAlignment="Right"
+                              Checked="OnCheckedIsRenormSpeeds"
+                              Unchecked="OnUncheckedIsRenormSpeeds">
+                        Осуществлять перенормировку?
+                    </CheckBox>
+                    
                     <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
                         <Label>Температура</Label>
-                        <xctk:IntegerUpDown Name="NudTemperature" TextAlignment="Right" Width="100" Height="25" Minimum="0" Maximum="10000" Increment="10" Value="300" />
+                        <xctk:IntegerUpDown Name="NudTemperature" 
+                                            TextAlignment="Right" Width="100" Height="25" 
+                                            Minimum="0" Maximum="10000" Increment="10" Value="300"
+                                            IsEnabled="False"/>
                     </WrapPanel>
 
                     <WrapPanel HorizontalAlignment="Right">
                         <Label>Шаг перенормировки</Label>
-                        <xctk:IntegerUpDown Name="NudStepNorm" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="100" Increment="5" Value="10" />
+                        <xctk:IntegerUpDown Name="NudStepNorm"
+                                            TextAlignment="Right" Width="100" Height="25"
+                                            Minimum="1" Maximum="100" Increment="5" Value="10"
+                                            IsEnabled="False"/>
                     </WrapPanel>
                 </StackPanel>
             </GroupBox>
@@ -158,16 +173,6 @@
                             <Image Source="icons/play.png" Width="40" Height="40" />
                         </Button>
                         <Label VerticalAlignment="Center">Запуск моделирования</Label>
-                    </WrapPanel>
-
-                    <WrapPanel>
-                        <Button Name="BtnStartRenormalizationSpeeds" IsEnabled="False" Width="50" Height="50"
-                            ToolTip="Запуск перенормировки скоростей"
-                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
-                            Click="OnStartRenormalizationSpeeds">
-                            <Image Source="icons/play_T.png" Width="40" Height="40" />
-                        </Button>
-                        <Label VerticalAlignment="Center">Запуск перенормировки скоростей</Label>
                     </WrapPanel>
 
                     <WrapPanel>
@@ -206,11 +211,5 @@
                              DoWork="OnBackgroundWorkerDoWorkCalculation"
                              RunWorkerCompleted="OnBackgroundWorkerRunWorkerCompletedCalculation"
                              ProgressChanged="OnBackgroundWorkerProgressChangedCalculation"/>
-        <cm:BackgroundWorker x:Key="backgroundWorkerRenormalizationSpeeds"
-                             WorkerReportsProgress="True"
-                             WorkerSupportsCancellation="True"
-                             DoWork="OnBackgroundWorkerDoWorkRenormalizationSpeeds"
-                             RunWorkerCompleted="OnBackgroundWorkerRunWorkerCompletedRenormalizationSpeeds"
-                             ProgressChanged="OnBackgroundWorkerProgressChangedRenormalizationSpeeds"/>
     </Window.Resources>
 </Window>

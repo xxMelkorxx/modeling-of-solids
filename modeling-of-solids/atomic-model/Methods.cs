@@ -95,10 +95,10 @@ namespace modeling_of_solids
         /// <summary>
         /// Начальная перенормировка скоростей.
         /// </summary>
-        /// <param name="T"></param>
-        public void InitVelocityNormalization(double T)
+        /// <param name="temp"></param>
+        public void InitVelocityNormalization(double temp)
         {
-            var vsqrt = Math.Sqrt(3 * kB * T / WeightAtom);
+            var vsqrt = Math.Sqrt(3 * kB * temp / WeightAtom);
             const double pi2 = 2 * Math.PI;
 
             Atoms.ForEach(atom =>
@@ -115,10 +115,11 @@ namespace modeling_of_solids
         /// <summary>
         /// Перенормировка скоростей к заданной температуре.
         /// </summary>
-        public void VelocityNormalization(double T)
+        /// <param name="temp">Заданная температура</param>
+        public void VelocityNormalization(double temp)
         {
             var sum = Atoms.Sum(atom => WeightAtom * atom.Velocity.SquaredMagnitude);
-            var beta = Math.Sqrt(3 * CountAtoms * kB * T / sum);
+            var beta = Math.Sqrt(3 * CountAtoms * kB * temp / sum);
             Atoms.ForEach(atom => atom.Velocity *= beta);
         }
     }
