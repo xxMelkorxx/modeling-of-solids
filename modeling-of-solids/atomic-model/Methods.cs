@@ -74,25 +74,6 @@ namespace modeling_of_solids
         }
 
         /// <summary>
-        /// Зануление импульса системы.
-        /// </summary>
-        /// <param name="eps">Точность.</param>
-        public void PulseZeroing(double eps = 1e-5)
-        {
-            Vector sum;
-            while (true)
-            {
-                sum = Vector.Zero;
-                Atoms.ForEach(atom => sum += atom.Velocity);
-                sum /= CountAtoms;
-
-                if (Math.Abs(sum.X + sum.Y + sum.Z) > eps)
-                    Atoms.ForEach(atom => atom.Velocity -= sum);
-                else break;
-            }
-        }
-
-        /// <summary>
         /// Начальная перенормировка скоростей.
         /// </summary>
         /// <param name="temp"></param>
@@ -122,5 +103,64 @@ namespace modeling_of_solids
             var beta = Math.Sqrt(3 * CountAtoms * kB * temp / sum);
             Atoms.ForEach(atom => atom.Velocity *= beta);
         }
-    }
+
+		/// <summary>
+		/// Зануление импульса системы.
+		/// </summary>
+		/// <param name="eps">Точность.</param>
+		public void PulseZeroing(double eps = 1e-5)
+		{
+			Vector sum;
+			while (true)
+			{
+				sum = Vector.Zero;
+				Atoms.ForEach(atom => sum += atom.Velocity);
+				sum /= CountAtoms;
+
+				if (Math.Abs(sum.X + sum.Y + sum.Z) > eps)
+					Atoms.ForEach(atom => atom.Velocity -= sum);
+				else break;
+			}
+		}
+
+        public PointD[] GetRadialDistribution()
+        {
+            var dr = 0.05 * Lattice * 0.726;
+            var dr2 = dr* dr;
+            var rd = new PointD[(int)(L / dr)];
+            for (int i = 0; i < rd.Length; i++)
+                rd[i] = new PointD(i * dr, 0);
+
+			// Подсчёт числа атомов в центральной части расчётной ячейки.
+			var countAtoms = 0;
+			foreach (var atom in Atoms)
+				if (atom.Position.X > 0.25 * L && atom.Position.X < 0.75 * L &&
+					atom.Position.Y > 0.25 * L && atom.Position.Y < 0.75 * L &&
+					atom.Position.Z > 0.25 * L && atom.Position.Z < 0.75 * L)
+					countAtoms++;
+
+			// Подсчёт n(r).
+			foreach (var atomI in Atoms)
+				foreach (var atomJ in Atoms)
+				{
+					if (atomJ.ID == atomI.ID)
+                        continue;
+
+					double r2 = SeparationSqured(atomI.Position, atomJ.Position, out _);
+					for (int k = 0; k < rd.Length; k++)
+						if (r2 > k * k * dr2 && r2 < (k + 1) * (k + 1) * dr2)
+							rd[k].Y++;
+				}
+
+			// Усреднение.
+			for (int i = 0; i < rd.Length; i++)
+			{
+				double coef = V / (CountAtoms * 4 * Math.PI * Math.PI * rd[i].X * rd[i].X * dr);
+				rd[i].Y /= (countAtoms == 0) ? 1 : countAtoms;
+				rd[i].Y *= (1 / coef == 0) ? 1 : coef;
+			}
+
+			return rd;
+		}
+	}
 }

@@ -38,7 +38,7 @@ namespace modeling_of_solids
 			_bgWorkerCreateModel = (BackgroundWorker)this.FindResource("backgroundWorkerCreateModel");
 			_bgWorkerCalculation = (BackgroundWorker)this.FindResource("backgroundWorkerCalculation");
 
-			// Настройка графика
+			// Настройка графика энергий системы.
 			ChartEnergy.Plot.Title("Графики энергий системы");
 			ChartEnergy.Plot.XLabel("Временной шаг");
 			ChartEnergy.Plot.YLabel("Энергия (эВ)");
@@ -49,6 +49,18 @@ namespace modeling_of_solids
 			ChartEnergy.Plot.Margins(x: 0.0, y: 0.6);
 			ChartEnergy.Plot.SetAxisLimits(0, 1000);
 			ChartEnergy.Refresh();
+
+			// Настройка графика радиального распределения системы.
+			ChartRadDist.Plot.Title("График радиального распределения системы.");
+			ChartRadDist.Plot.XLabel("r");
+			ChartRadDist.Plot.YLabel("g(r)");
+			ChartRadDist.Plot.XAxis.MajorGrid(enable: true, color: Color.FromArgb(50, Color.Black));
+			ChartRadDist.Plot.YAxis.MajorGrid(enable: true, color: Color.FromArgb(50, Color.Black));
+			ChartRadDist.Plot.XAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
+			ChartRadDist.Plot.YAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
+			ChartRadDist.Plot.Margins(x: 0.0, y: 0.6);
+			ChartRadDist.Plot.SetAxisLimits(xMin: 0, yMin: 0);
+			ChartRadDist.Refresh();
 		}
 
 		#region ---СОБЫТИЯ СОЗДАНИЯ МОДЕЛИ---
@@ -153,6 +165,8 @@ namespace modeling_of_solids
 			ChartEnergy.Plot.Clear();
 			ChartEnergy.Plot.SetAxisLimits(_iter, _iter + countStep - 1);
 			ChartEnergy.Refresh();
+			ChartRadDist.Plot.Clear();
+			ChartRadDist.Refresh();
 
 			// Сброс ProgressBar.
 			ProgressBar.Value = 0;
@@ -162,6 +176,7 @@ namespace modeling_of_solids
 			RtbOutputInfo.AppendText("Количество временных шагов: " + countStep + "\n" + (_isRenormSpeeds ? "Шаг перенормировки: " + stepNorm + "\n" : ""));
 			RtbOutputInfo.AppendText(TableHeader());
 			RtbOutputInfo.AppendText(TableData(_iter - 1));
+			RtbOutputInfo.ScrollToEnd();
 
 			// Запуск расчётов.
 			_bgWorkerCalculation.RunWorkerAsync(new FindPrimesInput(new object[] { countStep, snapshotStep, T, stepNorm }));
@@ -227,7 +242,7 @@ namespace modeling_of_solids
 
 				// Обновление ProgressBar.
 				if (i % (countStep / 100) == 0)
-					_bgWorkerCalculation.ReportProgress((int)((double)i / countStep * 100));
+					_bgWorkerCalculation.ReportProgress((int)((double)(i - _iter) / countStep * 100) + 1);
 			}
 
 			_iter += _iterCounter;
@@ -246,7 +261,7 @@ namespace modeling_of_solids
 			BtnStartCalculation.IsEnabled = true;
 			BtnCancelCalculation.IsEnabled = false;
 
-			// Настройка и отрисовка графика
+			// Настройка и отрисовка графика энергий системы.
 			ChartEnergy.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
 			ChartEnergy.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
 			ChartEnergy.Plot.AddSignalConst(_kePoints.ToArray(), color: Color.Red, label: "Кинетическая энергия");
@@ -254,6 +269,15 @@ namespace modeling_of_solids
 			ChartEnergy.Plot.AddSignalConst(_fePoints.ToArray(), color: Color.Green, label: "Полная энергия");
 			ChartEnergy.Plot.Legend(location: Alignment.UpperRight);
 			ChartEnergy.Refresh();
+
+			// Настройка и отрисовка графика радиального распределения.
+			var rd = _atomicModel.GetRadialDistribution();
+			var xs = rd.Select(p => p.X).ToArray();
+			var ys = rd.Select(p => p.Y).ToArray();
+			ChartRadDist.Plot.AddSignalXY(xs, ys, color: Color.Blue, label: "Радиальное распределение");
+			ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomicModel.Lattice * 0.726, yMin: 0);
+			ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
+			ChartRadDist.Refresh();
 		}
 
 		private void OnBackgroundWorkerProgressChangedCalculation(object sender, ProgressChangedEventArgs e)

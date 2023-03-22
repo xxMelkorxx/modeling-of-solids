@@ -29,7 +29,7 @@
                 </Grid.RowDefinitions>
 
                 <WpfPlot Grid.Row="0" Name="ChartEnergy"/>
-                <WpfPlot Grid.Row="1" Name="Chart1"/>
+                <WpfPlot Grid.Row="1" Name="ChartRadDist"/>
                 <WpfPlot Grid.Row="2" Name="Chart2"/>
             </Grid>
         </GroupBox>
