@@ -33,7 +33,7 @@ namespace modeling_of_solids
             if (Math.Abs(dxdydz.Z) > 0.5 * L)
                 dxdydz.Z -= Math.Sign(dxdydz.Z) * L;
 
-            return dxdydz.SquaredMagnitude;
+            return dxdydz.SquaredMagnitude();
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace modeling_of_solids
         /// <param name="temp">Заданная температура</param>
         public void VelocityNormalization(double temp)
         {
-            var sum = Atoms.Sum(atom => WeightAtom * atom.Velocity.SquaredMagnitude);
+            var sum = Atoms.Sum(atom => WeightAtom * atom.Velocity.SquaredMagnitude());
             var beta = Math.Sqrt(3 * CountAtoms * kB * temp / sum);
             Atoms.ForEach(atom => atom.Velocity *= beta);
         }

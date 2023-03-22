@@ -4,11 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 
 namespace modeling_of_solids
@@ -51,8 +48,6 @@ namespace modeling_of_solids
 			ChartEnergy.Plot.YAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
 			ChartEnergy.Plot.Margins(x: 0.0, y: 0.6);
 			ChartEnergy.Plot.SetAxisLimits(0, 1000);
-			ChartEnergy.Plot.AddHorizontalLine(0, Color.FromArgb(200, Color.Black));
-			ChartEnergy.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
 			ChartEnergy.Refresh();
 		}
 

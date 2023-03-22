@@ -26,22 +26,22 @@ namespace modeling_of_solids
         /// <summary>
         /// Возвращает значение наибольшей координаты.
         /// </summary>
-        public double MaxElement => Math.Max(Math.Max(X, Y), Math.Max(X, Z));
+        public double MaxElement() => Math.Max(Math.Max(X, Y), Math.Max(X, Z));
 
         /// <summary>
         /// Возвращает значение наименьшей координаты.
         /// </summary>
-        public double MinElement => Math.Min(Math.Min(X, Y), Math.Min(X, Z));
+        public double MinElement() => Math.Min(Math.Min(X, Y), Math.Min(X, Z));
 
         /// <summary>
         /// Квадрат величина вектора.
         /// </summary>
-        public double SquaredMagnitude => X * X + Y * Y + Z * Z;
+        public double SquaredMagnitude() => X * X + Y * Y + Z * Z;
 
         /// <summary>
         /// Величина вектора.
         /// </summary>
-        public double Magnitude => Math.Sqrt(SquaredMagnitude);
+        public double Magnitude() => Math.Sqrt(SquaredMagnitude());
 
         /// <summary>
         /// Квадрат магнитуды разности векторов.

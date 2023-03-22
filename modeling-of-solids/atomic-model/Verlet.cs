@@ -13,7 +13,7 @@
             Accel();
             
             // Вычисление кинетической энергии.
-            Atoms.ForEach(atom => Ke += 0.5 * atom.Velocity.SquaredMagnitude * WeightAtom);
+            Atoms.ForEach(atom => Ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom);
         }
 
         /// <summary>
@@ -43,7 +43,7 @@
                 // Частичное изменение скорости, используя новое ускорение.
                 atom.Velocity += 0.5 * atom.Acceleration * dt;
                 // Вычисление кинетической энергии.
-                Ke += 0.5 * atom.Velocity.SquaredMagnitude * WeightAtom;
+                Ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom / eV;
             });
         }
 
