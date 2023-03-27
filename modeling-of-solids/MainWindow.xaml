@@ -10,6 +10,7 @@
         mc:Ignorable="d"
         Title="ННГУ ИСИТ | Моделирование методом молекулярной динамики"
         Icon="/icons/unn_logo.ico"
+        RenderOptions.BitmapScalingMode="HighQuality"
         WindowState="Maximized" 
         FontSize="14" FontFamily="Segoe UI Semibold"
         Loaded="OnLoadedMainWindow">
@@ -44,9 +45,7 @@
             </Grid.RowDefinitions>
 
             <GroupBox Grid.Row="0" Header="Визуализация">
-                <Viewport3D Name="SceneVP3D">
-                    
-                </Viewport3D>
+                <Viewport3D Name="SceneVP3D"/>
             </GroupBox>
 
             <Slider Grid.Row="1" Name="SliderTimeStep" IsEnabled="False"
@@ -102,7 +101,7 @@
                             ToolTip="Создать модель"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnCreateModel">
-                        <Image Source="icons/check.png" />
+                        <Image Source="icons/check.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Button>
                 </Grid>
             </GroupBox>
@@ -171,7 +170,8 @@
                             ToolTip="Запуск моделирования"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnStartCalculation">
-                            <Image Source="icons/play.png" Width="40" Height="40" />
+                            <Image Source="icons/play.png" Width="40" Height="40"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                         <Label VerticalAlignment="Center">Запуск моделирования</Label>
                     </WrapPanel>
@@ -181,19 +181,10 @@
                             ToolTip="Сброс модели"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnCancelCalculation">
-                            <Image Source="icons/refresh.png" Width="40" Height="40" />
+                            <Image Source="icons/cancel.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Button>
                         <Label VerticalAlignment="Center">Отмена моделирования</Label>
-                    </WrapPanel>
-
-                    <WrapPanel>
-                        <Button Name="BtnPauseCalculation" IsEnabled="False" Width="50" Height="50"
-                            ToolTip="Сброс модели"
-                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
-                            Click="OnPauseCalculation">
-                            <Image Source="icons/pause.png" Width="40" Height="40" />
-                        </Button>
-                        <Label VerticalAlignment="Center">Приостановить моделирование</Label>
                     </WrapPanel>
                 </StackPanel>
             </GroupBox>

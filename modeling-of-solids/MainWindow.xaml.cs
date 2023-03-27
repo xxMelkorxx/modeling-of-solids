@@ -17,7 +17,6 @@ namespace modeling_of_solids
 
 		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
 		private int _iter, _iterCounter;
-		//private Mutex mutexObj;
 
 		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds;
 
@@ -25,7 +24,6 @@ namespace modeling_of_solids
 
 		private SceneManager _scene;
 		private List<List<Vector>> _positionsAtomsList;
-		private Point3D _cameraPosition = new(2, 2, 5);
 
 		private class FindPrimesInput
 		{
@@ -33,9 +31,9 @@ namespace modeling_of_solids
 
 			public FindPrimesInput(object[] args)
 			{
-				this.Args = new List<object>();
+				Args = new List<object>();
 				foreach (var arg in args)
-					this.Args.Add(arg);
+					Args.Add(arg);
 			}
 		}
 
@@ -75,7 +73,6 @@ namespace modeling_of_solids
 
 			// Инициализация сцены для визуализации.
 			_scene = new SceneManager() { Viewport3D = SceneVP3D };
-			_scene.CreateCamera(_cameraPosition);
 		}
 
 		#region ---СОБЫТИЯ СОЗДАНИЯ МОДЕЛИ---
@@ -90,6 +87,9 @@ namespace modeling_of_solids
 			var size = NudSize.Value ?? 1;
 			var k = NudDisplacement.Value ?? 0;
 			_iter = 1;
+
+			// Создание камеры для сцены.
+			_scene.CreateCamera(new(size, size, size));
 
 			BtnCreateModel.IsEnabled = false;
 			ProgressBar.Value = 0;
@@ -151,7 +151,6 @@ namespace modeling_of_solids
 				BtnCreateModel.IsEnabled = true;
 				BtnStartCalculation.IsEnabled = true;
 				BtnCancelCalculation.IsEnabled = false;
-				BtnPauseCalculation.IsEnabled = false;
 			}
 		}
 
@@ -182,7 +181,6 @@ namespace modeling_of_solids
 
 			BtnStartCalculation.IsEnabled = false;
 			BtnCancelCalculation.IsEnabled = true;
-			BtnPauseCalculation.IsEnabled = true;
 
 			// Очистка графиков.
 			ChartEnergy.Plot.Clear();
@@ -315,6 +313,9 @@ namespace modeling_of_solids
 		#endregion
 
 		#region ---СОБЫТИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ СЦЕНОЙ---
+
+
+
 		private void OnValueChangedSliderTimeStep(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			_scene.CreateMeshAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.GetSigma() / 2);
@@ -331,11 +332,6 @@ namespace modeling_of_solids
 		{
 			if (_bgWorkerCalculation.IsBusy)
 				_bgWorkerCalculation.CancelAsync();
-		}
-
-		private void OnPauseCalculation(object sender, RoutedEventArgs e)
-		{
-
 		}
 		#endregion
 
