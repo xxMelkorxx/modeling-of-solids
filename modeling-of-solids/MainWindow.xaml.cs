@@ -6,18 +6,26 @@ using System.Drawing;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 
 namespace modeling_of_solids
 {
 	public partial class MainWindow : Window
 	{
-		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
-		//private Mutex mutexObj;
 		private AtomicModel? _atomicModel;
-		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds;
-		private List<double> _kePoints, _pePoints, _fePoints;
+
+		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
 		private int _iter, _iterCounter;
+		//private Mutex mutexObj;
+
+		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds;
+
+		private List<double> _kePoints, _pePoints, _fePoints;
+
+		private SceneManager _scene;
+		private List<List<Vector>> _positionsAtomsList;
+		private Point3D _cameraPosition = new(2, 2, 5);
 
 		private class FindPrimesInput
 		{
@@ -37,7 +45,10 @@ namespace modeling_of_solids
 
 			_bgWorkerCreateModel = (BackgroundWorker)this.FindResource("backgroundWorkerCreateModel");
 			_bgWorkerCalculation = (BackgroundWorker)this.FindResource("backgroundWorkerCalculation");
+		}
 
+		void OnLoadedMainWindow(object sender, RoutedEventArgs e)
+		{
 			// Настройка графика энергий системы.
 			ChartEnergy.Plot.Title("Графики энергий системы");
 			ChartEnergy.Plot.XLabel("Временной шаг");
@@ -61,6 +72,10 @@ namespace modeling_of_solids
 			ChartRadDist.Plot.Margins(x: 0.0, y: 0.6);
 			ChartRadDist.Plot.SetAxisLimits(xMin: 0, yMin: 0);
 			ChartRadDist.Refresh();
+
+			// Инициализация сцены для визуализации.
+			_scene = new SceneManager() { Viewport3D = SceneVP3D };
+			_scene.CreateCamera(_cameraPosition);
 		}
 
 		#region ---СОБЫТИЯ СОЗДАНИЯ МОДЕЛИ---
@@ -84,6 +99,9 @@ namespace modeling_of_solids
 			_kePoints = new List<double>();
 			_pePoints = new List<double>();
 			_fePoints = new List<double>();
+
+			_positionsAtomsList = new List<List<Vector>>();
+			GC.Collect();
 
 			_bgWorkerCreateModel.RunWorkerAsync(new FindPrimesInput(new object[] { size, k }));
 		}
@@ -122,6 +140,11 @@ namespace modeling_of_solids
 				MessageBox.Show(e.Error.Message, "Произошла ошибка");
 			else
 			{
+				_positionsAtomsList.Add(_atomicModel.GetPositionsAtoms());
+				_scene.CreateMeshAtoms(_positionsAtomsList.First(), _atomicModel.GetSigma() / 2);
+				SliderTimeStep.Value = 0;
+				SliderTimeStep.IsEnabled = false;
+
 				// Вывод начальной информации.
 				RtbOutputInfo.AppendText(InitInfoSystem());
 
@@ -238,6 +261,8 @@ namespace modeling_of_solids
 				_pePoints.Add(_atomicModel.Pe);
 				_fePoints.Add(_atomicModel.Fe);
 
+				_positionsAtomsList.Add(_atomicModel.GetPositionsAtoms());
+
 				_iterCounter++;
 
 				// Обновление ProgressBar.
@@ -267,22 +292,32 @@ namespace modeling_of_solids
 			ChartEnergy.Plot.AddSignalConst(_kePoints.ToArray(), color: Color.Red, label: "Кинетическая энергия");
 			ChartEnergy.Plot.AddSignalConst(_pePoints.ToArray(), color: Color.Blue, label: "Потенциальная энергия");
 			ChartEnergy.Plot.AddSignalConst(_fePoints.ToArray(), color: Color.Green, label: "Полная энергия");
+			ChartEnergy.Plot.Margins(x: 0.0, y: 0.6);
 			ChartEnergy.Plot.Legend(location: Alignment.UpperRight);
 			ChartEnergy.Refresh();
 
 			// Настройка и отрисовка графика радиального распределения.
 			var rd = _atomicModel.GetRadialDistribution();
-			var xs = rd.Select(p => p.X).ToArray();
-			var ys = rd.Select(p => p.Y).ToArray();
-			ChartRadDist.Plot.AddSignalXY(xs, ys, color: Color.Blue, label: "Радиальное распределение");
+			ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
 			ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomicModel.Lattice * 0.726, yMin: 0);
 			ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
 			ChartRadDist.Refresh();
+
+			// Настройка слайдера.
+			SliderTimeStep.IsEnabled = true;
+			SliderTimeStep.Maximum = _positionsAtomsList.Count - 1;
 		}
 
 		private void OnBackgroundWorkerProgressChangedCalculation(object sender, ProgressChangedEventArgs e)
 		{
 			ProgressBar.Value = e.ProgressPercentage;
+		}
+		#endregion
+
+		#region ---СОБЫТИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ СЦЕНОЙ---
+		private void OnValueChangedSliderTimeStep(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			_scene.CreateMeshAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.GetSigma() / 2);
 		}
 		#endregion
 

@@ -1,108 +1,111 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Documents;
+using System.Windows.Media.Media3D;
 
 namespace modeling_of_solids
 {
-    public partial class AtomicModel
-    {
-        /// <summary>
-        /// Вычисление расстояния между частицами с учётом периодических граничных условий. 
-        /// </summary>
-        /// <param name="vec1"></param>
-        /// <param name="vec2"></param>
-        /// <param name="dxdydz"></param>
-        /// <returns></returns>
-        private double Separation(Vector vec1, Vector vec2, out Vector dxdydz) => Math.Sqrt(SeparationSqured(vec1, vec2, out dxdydz));
+	public partial class AtomicModel
+	{
+		/// <summary>
+		/// Вычисление расстояния между частицами с учётом периодических граничных условий. 
+		/// </summary>
+		/// <param name="vec1"></param>
+		/// <param name="vec2"></param>
+		/// <param name="dxdydz"></param>
+		/// <returns></returns>
+		private double Separation(Vector vec1, Vector vec2, out Vector dxdydz) => Math.Sqrt(SeparationSqured(vec1, vec2, out dxdydz));
 
-        /// <summary>
-        /// Вычисление квадрата расстояния между частицами с учётом периодических граничных условий. 
-        /// </summary>
-        /// <param name="vec1"></param>
-        /// <param name="vec2"></param>
-        /// <param name="dxdydz"></param>
-        /// <returns></returns>
-        private double SeparationSqured(Vector vec1, Vector vec2, out Vector dxdydz)
-        {
-            dxdydz = vec1 - vec2;
+		/// <summary>
+		/// Вычисление квадрата расстояния между частицами с учётом периодических граничных условий. 
+		/// </summary>
+		/// <param name="vec1"></param>
+		/// <param name="vec2"></param>
+		/// <param name="dxdydz"></param>
+		/// <returns></returns>
+		private double SeparationSqured(Vector vec1, Vector vec2, out Vector dxdydz)
+		{
+			dxdydz = vec1 - vec2;
 
-            // Обеспечивает, что расстояние между частицами никогда не будет больше L/2.
-            if (Math.Abs(dxdydz.X) > 0.5 * L)
-                dxdydz.X -= Math.Sign(dxdydz.X) * L;
-            if (Math.Abs(dxdydz.Y) > 0.5 * L)
-                dxdydz.Y -= Math.Sign(dxdydz.Y) * L;
-            if (Math.Abs(dxdydz.Z) > 0.5 * L)
-                dxdydz.Z -= Math.Sign(dxdydz.Z) * L;
+			// Обеспечивает, что расстояние между частицами никогда не будет больше L/2.
+			if (Math.Abs(dxdydz.X) > 0.5 * L)
+				dxdydz.X -= Math.Sign(dxdydz.X) * L;
+			if (Math.Abs(dxdydz.Y) > 0.5 * L)
+				dxdydz.Y -= Math.Sign(dxdydz.Y) * L;
+			if (Math.Abs(dxdydz.Z) > 0.5 * L)
+				dxdydz.Z -= Math.Sign(dxdydz.Z) * L;
 
-            return dxdydz.SquaredMagnitude();
-        }
+			return dxdydz.SquaredMagnitude();
+		}
 
-        /// <summary>
-        /// Учёт периодических граничных условий.
-        /// </summary>
-        /// <param name="pos"></param>
-        /// <returns></returns>
-        private Vector Periodic(Vector pos)
-        {
-            var newPos = Vector.Zero;
+		/// <summary>
+		/// Учёт периодических граничных условий.
+		/// </summary>
+		/// <param name="pos"></param>
+		/// <returns></returns>
+		private Vector Periodic(Vector pos)
+		{
+			var newPos = Vector.Zero;
 
-            if (pos.X > L) newPos.X = pos.X - L;
-            else if (pos.X < 0) newPos.X = L + pos.X;
-            else newPos.X = pos.X;
+			if (pos.X > L) newPos.X = pos.X - L;
+			else if (pos.X < 0) newPos.X = L + pos.X;
+			else newPos.X = pos.X;
 
-            if (pos.Y > L) newPos.Y = pos.Y - L;
-            else if (pos.Y < 0) newPos.Y = L + pos.Y;
-            else newPos.Y = pos.Y;
+			if (pos.Y > L) newPos.Y = pos.Y - L;
+			else if (pos.Y < 0) newPos.Y = L + pos.Y;
+			else newPos.Y = pos.Y;
 
-            if (pos.Z > L) newPos.Z = pos.Z - L;
-            else if (pos.Z < 0) newPos.Z = L + pos.Z;
-            else newPos.Z = pos.Z;
+			if (pos.Z > L) newPos.Z = pos.Z - L;
+			else if (pos.Z < 0) newPos.Z = L + pos.Z;
+			else newPos.Z = pos.Z;
 
-            return newPos;
-        }
+			return newPos;
+		}
 
-        /// <summary>
-        /// Начальное смещение атомов.
-        /// </summary>
-        /// <param name="k">Коэффициент смещения.</param>
-        public void AtomsDisplacement(double k)
-        {
-            Atoms.ForEach(atom =>
-            {
-                var displacement = (-1 * Vector.One + 2 * new Vector(_rnd.NextDouble(), _rnd.NextDouble(), _rnd.NextDouble())) * k * Lattice;
-                atom.Position = Periodic(atom.Position + displacement);
-            });
-        }
+		/// <summary>
+		/// Начальное смещение атомов.
+		/// </summary>
+		/// <param name="k">Коэффициент смещения.</param>
+		public void AtomsDisplacement(double k)
+		{
+			Atoms.ForEach(atom =>
+			{
+				var displacement = (-1 * Vector.One + 2 * new Vector(_rnd.NextDouble(), _rnd.NextDouble(), _rnd.NextDouble())) * k * Lattice;
+				atom.Position = Periodic(atom.Position + displacement);
+			});
+		}
 
-        /// <summary>
-        /// Начальная перенормировка скоростей.
-        /// </summary>
-        /// <param name="temp"></param>
-        public void InitVelocityNormalization(double temp)
-        {
-            var vsqrt = Math.Sqrt(3 * kB * temp / WeightAtom);
-            const double pi2 = 2 * Math.PI;
+		/// <summary>
+		/// Начальная перенормировка скоростей.
+		/// </summary>
+		/// <param name="temp"></param>
+		public void InitVelocityNormalization(double temp)
+		{
+			var vsqrt = Math.Sqrt(3 * kB * temp / WeightAtom);
+			const double pi2 = 2 * Math.PI;
 
-            Atoms.ForEach(atom =>
-            {
-                var r1 = _rnd.NextDouble();
-                var r2 = _rnd.NextDouble();
-                atom.Velocity = new Vector(
-                    Math.Sin(pi2 * r1) * Math.Cos(pi2 * r2),
-                    Math.Sin(pi2 * r1) * Math.Sin(pi2 * r2),
-                    Math.Sin(pi2 * r1)) * vsqrt;
-            });
-        }
+			Atoms.ForEach(atom =>
+			{
+				var r1 = _rnd.NextDouble();
+				var r2 = _rnd.NextDouble();
+				atom.Velocity = new Vector(
+					Math.Sin(pi2 * r1) * Math.Cos(pi2 * r2),
+					Math.Sin(pi2 * r1) * Math.Sin(pi2 * r2),
+					Math.Sin(pi2 * r1)) * vsqrt;
+			});
+		}
 
-        /// <summary>
-        /// Перенормировка скоростей к заданной температуре.
-        /// </summary>
-        /// <param name="temp">Заданная температура</param>
-        public void VelocityNormalization(double temp)
-        {
-            var sum = Atoms.Sum(atom => WeightAtom * atom.Velocity.SquaredMagnitude());
-            var beta = Math.Sqrt(3 * CountAtoms * kB * temp / sum);
-            Atoms.ForEach(atom => atom.Velocity *= beta);
-        }
+		/// <summary>
+		/// Перенормировка скоростей к заданной температуре.
+		/// </summary>
+		/// <param name="temp">Заданная температура</param>
+		public void VelocityNormalization(double temp)
+		{
+			var sum = Atoms.Sum(atom => WeightAtom * atom.Velocity.SquaredMagnitude());
+			var beta = Math.Sqrt(3 * CountAtoms * kB * temp / sum);
+			Atoms.ForEach(atom => atom.Velocity *= beta);
+		}
 
 		/// <summary>
 		/// Зануление импульса системы.
@@ -123,13 +126,13 @@ namespace modeling_of_solids
 			}
 		}
 
-        public PointD[] GetRadialDistribution()
-        {
-            var dr = 0.05 * Lattice * 0.726;
-            var dr2 = dr* dr;
-            var rd = new PointD[(int)(L / dr)];
-            for (int i = 0; i < rd.Length; i++)
-                rd[i] = new PointD(i * dr, 0);
+		public PointD[] GetRadialDistribution()
+		{
+			var dr = 0.05 * Lattice * 0.726;
+			var dr2 = dr * dr;
+			var rd = new PointD[(int)(L / dr)];
+			for (int i = 0; i < rd.Length; i++)
+				rd[i] = new PointD(i * dr, 0);
 
 			// Подсчёт числа атомов в центральной части расчётной ячейки.
 			var countAtoms = 0;
@@ -144,7 +147,7 @@ namespace modeling_of_solids
 				foreach (var atomJ in Atoms)
 				{
 					if (atomJ.ID == atomI.ID)
-                        continue;
+						continue;
 
 					double r2 = SeparationSqured(atomI.Position, atomJ.Position, out _);
 					for (int k = 0; k < rd.Length; k++)
@@ -162,5 +165,18 @@ namespace modeling_of_solids
 
 			return rd;
 		}
+
+		/// <summary>
+		/// Получение координат атомов.
+		/// </summary>
+		/// <returns></returns>
+		public List<Vector> GetPositionsAtoms()
+		{
+			var positionsAtoms = new List<Vector>();
+			Atoms.ForEach(atom => positionsAtoms.Add(atom.Position));
+			return positionsAtoms;
+		}
+
+		public double GetSigma() => ((PotentialLJ)_potential).Sigma;
 	}
 }

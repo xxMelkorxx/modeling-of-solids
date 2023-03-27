@@ -11,7 +11,8 @@
         Title="ННГУ ИСИТ | Моделирование методом молекулярной динамики"
         Icon="/icons/unn_logo.ico"
         WindowState="Maximized" 
-        FontSize="14" FontFamily="Segoe UI Semibold">
+        FontSize="14" FontFamily="Segoe UI Semibold"
+        Loaded="OnLoadedMainWindow">
 
     <Grid Margin="5,0,5,0">
         <Grid.ColumnDefinitions>
@@ -43,12 +44,13 @@
             </Grid.RowDefinitions>
 
             <GroupBox Grid.Row="0" Header="Визуализация">
-                <Viewport3D Name="Viewport">
-
+                <Viewport3D Name="SceneVP3D">
+                    
                 </Viewport3D>
             </GroupBox>
 
-            <Slider Grid.Row="1" Name="SliderForViewPort"/>
+            <Slider Grid.Row="1" Name="SliderTimeStep" IsEnabled="False"
+                    ValueChanged="OnValueChangedSliderTimeStep"/>
 
             <GroupBox Grid.Row="2" Header="Выходная информация">
                 <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Mono"
@@ -143,7 +145,7 @@
                               Unchecked="OnUncheckedIsRenormSpeeds">
                         Осуществлять перенормировку?
                     </CheckBox>
-                    
+
                     <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
                         <Label>Температура</Label>
                         <xctk:IntegerUpDown Name="NudTemperature" 
@@ -193,7 +195,7 @@
                         </Button>
                         <Label VerticalAlignment="Center">Приостановить моделирование</Label>
                     </WrapPanel>
-                </StackPanel>                               
+                </StackPanel>
             </GroupBox>
         </StackPanel>
     </Grid>

@@ -5,12 +5,12 @@
         /// <summary>
         /// Модуль потенциальной энергии взаимодействия между атомами при равновесии.
         /// </summary>
-        private double _d;
+        public double D;
 
         /// <summary>
         /// Расстояние между центрами атомов при котором U(sigma) = 0.
         /// </summary>
-        private double _sigma;
+        public double Sigma;
 
         /// <summary>
         /// Тип атома.
@@ -24,8 +24,8 @@
                 switch (_type)
                 {
                     case AtomType.Ar:
-                        _d = 0.01029;
-                        _sigma = 0.3408;
+                        D = 0.01029;
+						Sigma = 0.3408;
                         break;
                 }
             }
@@ -43,11 +43,11 @@
             var r = (double)args[0];
             var dxdydz = (Vector)args[1];
 
-            var ri = _sigma / r;
+            var ri = Sigma / r;
             var ri3 = ri * ri * ri;
             var ri6 = ri3 * ri3;
 
-            return 24 * _d * eV * ri6 * (2 * ri6 - 1) / (r * r) * dxdydz;
+            return 24 * D * eV * ri6 * (2 * ri6 - 1) / (r * r) * dxdydz;
         }
 
         /// <summary>
@@ -59,11 +59,11 @@
         {
             var r = (double)args[0];
 
-            var ri = _sigma / r;
+            var ri = Sigma / r;
             var ri3 = ri * ri * ri;
             var ri6 = ri3 * ri3;
 
-            return 4 * _d * ri6 * (ri6 - 1);
+            return 4 * D * ri6 * (ri6 - 1);
         }
     }
 }
