@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Media3D;
@@ -24,6 +25,10 @@ namespace modeling_of_solids
 
 		private SceneManager _scene;
 		private List<List<Vector>> _positionsAtomsList;
+
+		private List<Vector> _rt1, _rt2;
+		private List<PointD> _rrt;
+		private double _averT;
 
 		private class FindPrimesInput
 		{
@@ -71,6 +76,18 @@ namespace modeling_of_solids
 			ChartRadDist.Plot.SetAxisLimits(xMin: 0, yMin: 0);
 			ChartRadDist.Refresh();
 
+			// Настройка графика среднего квадрата смещения системы.
+			ChartRt.Plot.Title("График  среднего квадрата смещения системы.");
+			ChartRt.Plot.XLabel("Временной интервал (t)");
+			ChartRt.Plot.YLabel("Сред. квадрат смещения (R²)");
+			ChartRt.Plot.XAxis.MajorGrid(enable: true, color: Color.FromArgb(50, Color.Black));
+			ChartRt.Plot.YAxis.MajorGrid(enable: true, color: Color.FromArgb(50, Color.Black));
+			ChartRt.Plot.XAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
+			ChartRt.Plot.YAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
+			//ChartRt.Plot.Margins(x: 0.0, y: 0.6);
+			ChartRt.Plot.SetAxisLimits(xMin: 0, yMin: 0);
+			ChartRt.Refresh();
+
 			// Инициализация сцены для визуализации.
 			_scene = new SceneManager() { Viewport3D = SceneVP3D };
 		}
@@ -88,9 +105,6 @@ namespace modeling_of_solids
 			var k = NudDisplacement.Value ?? 0;
 			_iter = 1;
 
-			// Создание камеры для сцены.
-			_scene.CreateCamera(new(size, size, size));
-
 			BtnCreateModel.IsEnabled = false;
 			ProgressBar.Value = 0;
 			RtbOutputInfo.Document.Blocks.Clear();
@@ -100,12 +114,20 @@ namespace modeling_of_solids
 			_pePoints = new List<double>();
 			_fePoints = new List<double>();
 
+			// Инициализация списка позиций атомов.
 			_positionsAtomsList = new List<List<Vector>>();
+
 			GC.Collect();
 
 			_bgWorkerCreateModel.RunWorkerAsync(new FindPrimesInput(new object[] { size, k }));
 		}
 
+		/// <summary>
+		/// DO WORK CREATE MODEL
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		/// <exception cref="ArgumentException"></exception>
 		private void OnBackgroundWorkerDoWorkCreateModel(object sender, DoWorkEventArgs e)
 		{
 			var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
@@ -134,14 +156,22 @@ namespace modeling_of_solids
 			_fePoints.Add(_atomicModel.Fe);
 		}
 
+		/// <summary>
+		/// RUN WORKER COMPLETED CREATE MODEL
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void OnBackgroundWorkerRunWorkerCompletedCreateModel(object sender, RunWorkerCompletedEventArgs e)
 		{
 			if (e.Error != null)
 				MessageBox.Show(e.Error.Message, "Произошла ошибка");
 			else
 			{
+				// Запоминание позиции атомов на 0-ом шаге.
 				_positionsAtomsList.Add(_atomicModel.GetPositionsAtoms());
-				_scene.CreateMeshAtoms(_positionsAtomsList.First(), _atomicModel.GetSigma() / 2);
+				// Отрисовка атомов на сцене.
+				_scene.CreateMeshAtoms(_positionsAtomsList.First(), _atomicModel.L, _atomicModel.GetSigma() / 2);
+				// Обнуление и блокировка слайдера.
 				SliderTimeStep.Value = 0;
 				SliderTimeStep.IsEnabled = false;
 
@@ -154,6 +184,11 @@ namespace modeling_of_solids
 			}
 		}
 
+		/// <summary>
+		/// PROGRESS CHANGED CREATE MODEL
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void OnBackgroundWorkerProgressChangedCreateModel(object sender, ProgressChangedEventArgs e)
 		{
 			ProgressBar.Value = e.ProgressPercentage;
@@ -171,16 +206,20 @@ namespace modeling_of_solids
 		{
 			var countStep = NudCountStep.Value ?? 1000;
 			var snapshotStep = NudSnapshotStep.Value ?? 1;
+			var stepRt = NudStepRt.Value ?? 1000;
 			var T = NudTemperature.Value ?? 300;
 			var stepNorm = NudStepNorm.Value ?? 100;
-			var dt = NudTimeStep.Value ?? 1;
-			var dtOrder = NudTimeStepOrder.Value ?? -14;
 
 			if (_atomicModel != null)
-				_atomicModel.dt = dt * Math.Pow(10, dtOrder);
+				_atomicModel.dt = (NudTimeStep.Value ?? 1) * Math.Pow(10, NudTimeStepOrder.Value ?? -14);
 
 			BtnStartCalculation.IsEnabled = false;
 			BtnCancelCalculation.IsEnabled = true;
+
+			// Инициализация массива среднего квадрата смещения.
+			_rt1 = _atomicModel.GetPositionsNonePeriodicAtoms();
+			_rrt = new List<PointD>() { new(0, 0) };
+			_averT = 0;
 
 			// Очистка графиков.
 			ChartEnergy.Plot.Clear();
@@ -188,6 +227,9 @@ namespace modeling_of_solids
 			ChartEnergy.Refresh();
 			ChartRadDist.Plot.Clear();
 			ChartRadDist.Refresh();
+			ChartRt.Plot.Clear();
+			ChartRt.Refresh();
+
 
 			// Сброс ProgressBar.
 			ProgressBar.Value = 0;
@@ -200,19 +242,24 @@ namespace modeling_of_solids
 			RtbOutputInfo.ScrollToEnd();
 
 			// Запуск расчётов.
-			_bgWorkerCalculation.RunWorkerAsync(new FindPrimesInput(new object[] { countStep, snapshotStep, T, stepNorm }));
+			_bgWorkerCalculation.RunWorkerAsync(new FindPrimesInput(new object[] { countStep, snapshotStep, stepRt, T, stepNorm }));
 		}
 
+		/// <summary>
+		/// DO WORK CALCULATION
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		/// <exception cref="Exception"></exception>
+		/// <exception cref="ArgumentException"></exception>
 		private void OnBackgroundWorkerDoWorkCalculation(object sender, DoWorkEventArgs e)
 		{
-			if (_atomicModel == null)
-				throw new Exception("atomicModel is null");
-
 			var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
 			var countStep = (int)input.Args[0];
 			var snapshotStep = (int)input.Args[1];
-			var T = (int)input.Args[2];
-			var stepNorm = (int)input.Args[3];
+			var stepRt = (int)input.Args[2];
+			var T = (int)input.Args[3];
+			var stepNorm = (int)input.Args[4];
 
 			// Начальная перенормировка скоростей, если она включено.
 			if (_isRenormSpeeds)
@@ -243,6 +290,8 @@ namespace modeling_of_solids
 					_atomicModel.PulseZeroing();
 				}
 
+				_averT += _atomicModel.T;
+
 				// Вывод информации в UI.
 				var ii = i;
 				Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, () =>
@@ -259,7 +308,15 @@ namespace modeling_of_solids
 				_pePoints.Add(_atomicModel.Pe);
 				_fePoints.Add(_atomicModel.Fe);
 
+				// Запоминание позиций атомов на очередном временном шаге.
 				_positionsAtomsList.Add(_atomicModel.GetPositionsAtoms());
+
+				// Расчёт среднего квадрата смещения.
+				if (i % stepRt == 0 || i == _iter + countStep - 1)
+				{
+					_rt2 = _atomicModel.GetPositionsNonePeriodicAtoms();
+					_rrt.Add(new(i - _iter + 1, Math.Round(_atomicModel.AverageSquareOffset(_rt1, _rt2), 5)));
+				}
 
 				_iterCounter++;
 
@@ -268,9 +325,15 @@ namespace modeling_of_solids
 					_bgWorkerCalculation.ReportProgress((int)((double)(i - _iter) / countStep * 100) + 1);
 			}
 
+			_averT /= countStep;
 			_iter += _iterCounter;
 		}
 
+		/// <summary>
+		/// RUN WORKER COMPLETED CALCULATION
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void OnBackgroundWorkerRunWorkerCompletedCalculation(object sender, RunWorkerCompletedEventArgs e)
 		{
 			if (e.Cancelled)
@@ -301,11 +364,23 @@ namespace modeling_of_solids
 			ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
 			ChartRadDist.Refresh();
 
+			// Настройка и отрисовка графика среднего квадрата смещения распределения.
+			ChartRt.Plot.AddSignalXY(_rrt.Select(p => p.X).ToArray(), _rrt.Select(p => p.Y).ToArray(),
+				color: Color.Blue, label: "Средний квадрат смещения (средняя температура -" + _averT.ToString("F3") + " К)");
+			ChartRt.Plot.SetAxisLimits(xMin: 0, xMax: _rrt.Max(p => p.X), yMin: 0, yMax: (_rrt.Max(p => p.Y) == 0 ? 0.1 : _rrt.Max(p => p.Y)) * 1.5);
+			ChartRt.Plot.Legend(location: Alignment.UpperRight);
+			ChartRt.Refresh();
+
 			// Настройка слайдера.
 			SliderTimeStep.IsEnabled = true;
 			SliderTimeStep.Maximum = _positionsAtomsList.Count - 1;
 		}
 
+		/// <summary>
+		/// PROGRESS CHANGED CALCULATION
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void OnBackgroundWorkerProgressChangedCalculation(object sender, ProgressChangedEventArgs e)
 		{
 			ProgressBar.Value = e.ProgressPercentage;
@@ -313,12 +388,9 @@ namespace modeling_of_solids
 		#endregion
 
 		#region ---СОБЫТИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ СЦЕНОЙ---
-
-
-
 		private void OnValueChangedSliderTimeStep(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
-			_scene.CreateMeshAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.GetSigma() / 2);
+			_scene.CreateMeshAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.L, _atomicModel.GetSigma() / 2);
 		}
 		#endregion
 

@@ -10,7 +10,6 @@ namespace modeling_of_solids
 	{
 		private Model3DGroup _mainModel3DGroup = new();
 		private ModelVisual3D _modelVisual3D = new();
-		private Vector3D _lightDirection = new(-10, -10, -10);
 		private Vector3D _rotateCenter = new(0, 0, 0);
 		private double _distance, _distanceMax;
 		private System.Windows.Point _lastPosition;
@@ -43,25 +42,30 @@ namespace modeling_of_solids
 		/// Создание источника света.
 		/// </summary>
 		/// <param name="dir"></param>
-		public void CreateLight(Vector3D dir)
+		public void CreateLight(double l)
 		{
-			var directionalLight = new DirectionalLight(Colors.White, dir);
-			_mainModel3DGroup.Children.Add(directionalLight);
+			var directionalLight1 = new DirectionalLight(Colors.White, new(-l * 10, l * 10, -l * 10));
+			var directionalLight2 = new DirectionalLight(Colors.White, new(l * 10, -l * 10, l * 10));
+			_mainModel3DGroup.Children.Add(directionalLight1);
+			_mainModel3DGroup.Children.Add(directionalLight2);
 		}
 
 		/// <summary>
 		/// Отрисовка атомов.
 		/// </summary>
 		/// <param name="positons"></param>
+		/// <param name="l"></param>
 		/// <param name="radius"></param>
 		/// <param name="rowCount"></param>
 		/// <param name="columnCount"></param>
-		public void CreateMeshAtoms(List<Vector> positons, double radius = 0.1, int rowCount = 10, int columnCount = 10)
+		public void CreateMeshAtoms(List<Vector> positons, double l, double radius = 0.1, int rowCount = 10, int columnCount = 10)
 		{
 			ClearScene(_modelVisual3D);
-			CreateLight(_lightDirection);
+			CreateCamera(new(-l * 3, l, -l * 2));
+			CreateLight(l);
 
-			positons.ForEach(pos => DrawSphere.CreateSphere(_mainModel3DGroup, pos, radius, rowCount, columnCount));
+			positons.ForEach(pos => Draw.CreateSphere(_mainModel3DGroup, pos - l / 2, radius, rowCount, columnCount));
+			Draw.CreateCube(_mainModel3DGroup, Vector.Zero, l);
 
 			_modelVisual3D.Content = _mainModel3DGroup;
 			Viewport3D.Children.Add(_modelVisual3D);

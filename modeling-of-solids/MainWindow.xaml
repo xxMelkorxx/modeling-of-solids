@@ -32,7 +32,7 @@
 
                 <WpfPlot Grid.Row="0" Name="ChartEnergy"/>
                 <WpfPlot Grid.Row="1" Name="ChartRadDist"/>
-                <WpfPlot Grid.Row="2" Name="Chart2"/>
+                <WpfPlot Grid.Row="2" Name="ChartRt"/>
             </Grid>
         </GroupBox>
 
@@ -132,6 +132,13 @@
                         <xctk:IntegerUpDown Name="NudSnapshotStep" 
                                             TextAlignment="Right" Width="100" Height="25" 
                                             Minimum="1" Maximum="100000" Increment="1" Value="10"/>
+                    </WrapPanel>
+
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Шаг расчёта R²</Label>
+                        <xctk:IntegerUpDown Name="NudStepRt" 
+                                            TextAlignment="Right" Width="100" Height="25" 
+                                            Minimum="10" Maximum="10000" Increment="1000" Value="1000"/>
                     </WrapPanel>
                 </StackPanel>
             </GroupBox>

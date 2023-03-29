@@ -30,6 +30,7 @@
             {
                 var newPos = atom.Velocity * dt + 0.5 * atom.Acceleration * dt * dt;
                 atom.Position = Periodic(atom.Position + newPos);
+                atom.PositionNonePeriodic += newPos;
             });
 
             // Частичное изменение скорости, используя старое ускорение.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Documents;
 using System.Windows.Media.Media3D;
+using static ScottPlot.Plottable.PopulationPlot;
 
 namespace modeling_of_solids
 {
@@ -146,17 +147,17 @@ namespace modeling_of_solids
 			foreach (var atomI in Atoms)
 				foreach (var atomJ in Atoms)
 				{
-					if (atomJ.ID == atomI.ID)
+					if (atomJ.Equals(atomI))
 						continue;
 
 					double r2 = SeparationSqured(atomI.Position, atomJ.Position, out _);
-					for (int k = 0; k < rd.Length; k++)
+					for (var k = 0; k < rd.Length; k++)
 						if (r2 > k * k * dr2 && r2 < (k + 1) * (k + 1) * dr2)
 							rd[k].Y++;
 				}
 
 			// Усреднение.
-			for (int i = 0; i < rd.Length; i++)
+			for (var i = 0; i < rd.Length; i++)
 			{
 				double coef = V / (CountAtoms * 4 * Math.PI * Math.PI * rd[i].X * rd[i].X * dr);
 				rd[i].Y /= (countAtoms == 0) ? 1 : countAtoms;
@@ -169,14 +170,37 @@ namespace modeling_of_solids
 		/// <summary>
 		/// Получение координат атомов.
 		/// </summary>
-		/// <returns></returns>
 		public List<Vector> GetPositionsAtoms()
 		{
-			var positionsAtoms = new List<Vector>();
-			Atoms.ForEach(atom => positionsAtoms.Add(atom.Position));
-			return positionsAtoms;
+			var positions = new List<Vector>();
+			Atoms.ForEach(atom => positions.Add(atom.Position));
+			return positions;
+		}
+
+		/// <summary>
+		/// Получение координат атомов без учёта ПГУ.
+		/// </summary>
+		public List<Vector> GetPositionsNonePeriodicAtoms()
+		{
+			var positions = new List<Vector>();
+			Atoms.ForEach(atom => positions.Add(atom.PositionNonePeriodic));
+			return positions;
 		}
 
 		public double GetSigma() => ((PotentialLJ)_potential).Sigma;
+
+		/// <summary>
+		/// Средний квадрат смещения.
+		/// </summary>
+		/// <param name="rt1"></param>
+		/// <param name="rt2"></param>
+		/// <returns></returns>
+		public double AverageSquareOffset(List<Vector> rt1, List<Vector> rt2)
+		{
+			double sum = 0;
+			for (int i = 0; i < rt1.Count; i++)
+				sum += (rt2[i] - rt1[i]).SquaredMagnitude();
+			return sum / CountAtoms;
+		}
 	}
 }
