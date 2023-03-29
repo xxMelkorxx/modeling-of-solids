@@ -45,7 +45,9 @@
             </Grid.RowDefinitions>
 
             <GroupBox Grid.Row="0" Header="Визуализация">
-                <Viewport3D Name="SceneVP3D"/>
+                <Viewport3D Name="SceneVP3D"
+                            RenderOptions.BitmapScalingMode="HighQuality">
+                </Viewport3D>
             </GroupBox>
 
             <Slider Grid.Row="1" Name="SliderTimeStep" IsEnabled="False"
