@@ -2,12 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.Linq;
-using System.Security.Policy;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 
 namespace modeling_of_solids
@@ -84,7 +82,7 @@ namespace modeling_of_solids
 			ChartRt.Plot.YAxis.MajorGrid(enable: true, color: Color.FromArgb(50, Color.Black));
 			ChartRt.Plot.XAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
 			ChartRt.Plot.YAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
-			//ChartRt.Plot.Margins(x: 0.0, y: 0.6);
+			ChartRt.Plot.Margins(x: 0.0, y: 0.6);
 			ChartRt.Plot.SetAxisLimits(xMin: 0, yMin: 0);
 			ChartRt.Refresh();
 
@@ -170,6 +168,7 @@ namespace modeling_of_solids
 				// Запоминание позиции атомов на 0-ом шаге.
 				_positionsAtomsList.Add(_atomicModel.GetPositionsAtoms());
 				// Отрисовка атомов на сцене.
+				_scene.CreateCamera(_atomicModel.L);
 				_scene.CreateMeshAtoms(_positionsAtomsList.First(), _atomicModel.L, _atomicModel.GetSigma() / 2);
 				// Обнуление и блокировка слайдера.
 				SliderTimeStep.Value = 0;

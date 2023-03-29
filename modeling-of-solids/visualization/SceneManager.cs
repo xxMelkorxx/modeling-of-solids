@@ -8,11 +8,14 @@ namespace modeling_of_solids
 {
 	class SceneManager
 	{
-		private Model3DGroup _mainModel3DGroup = new();
-		private ModelVisual3D _modelVisual3D = new();
+		private readonly Model3DGroup _mainModel3DGroup = new();
+		private readonly ModelVisual3D _modelVisual3D = new();
 		private Vector3D _rotateCenter = new(0, 0, 0);
 		private double _distance, _distanceMax;
 		private System.Windows.Point _lastPosition;
+
+		private Point3D _position;
+		private Vector3D _direction;
 
 		public Viewport3D Viewport3D { get; set; }
 
@@ -20,14 +23,18 @@ namespace modeling_of_solids
 		/// Создание камеры.
 		/// </summary>
 		/// <param name="position"></param>
-		public void CreateCamera(Point3D position)
+		public void CreateCamera(double l)
 		{
-			var camera = new PerspectiveCamera
+			_position = new(-l * 3, l, -l * 2);
+			_direction = _rotateCenter - (Vector3D)_position;
+
+			PerspectiveCamera camera = new()
 			{
-				Position = position,
-				LookDirection = new(-position.X, -position.Y, -position.Z)
+				Position = _position,
+				LookDirection = _direction,
 			};
-			_distanceMax = position.Z;
+
+			_distanceMax = l * 5;
 
 			Viewport3D.Camera = camera;
 			Viewport3D.MouseLeftButtonDown += OnMouseLeftButtonDownSceneVP3D;
@@ -42,12 +49,10 @@ namespace modeling_of_solids
 		/// Создание источника света.
 		/// </summary>
 		/// <param name="dir"></param>
-		public void CreateLight(double l)
+		public void CreateLight()
 		{
-			var directionalLight1 = new DirectionalLight(Colors.White, new(-l * 10, l * 10, -l * 10));
-			var directionalLight2 = new DirectionalLight(Colors.White, new(l * 10, -l * 10, l * 10));
-			_mainModel3DGroup.Children.Add(directionalLight1);
-			_mainModel3DGroup.Children.Add(directionalLight2);
+			DirectionalLight directionalLight = new(Colors.White, _direction);
+			_mainModel3DGroup.Children.Add(directionalLight);
 		}
 
 		/// <summary>
@@ -61,8 +66,8 @@ namespace modeling_of_solids
 		public void CreateMeshAtoms(List<Vector> positons, double l, double radius = 0.1, int rowCount = 10, int columnCount = 10)
 		{
 			ClearScene(_modelVisual3D);
-			CreateCamera(new(-l * 3, l, -l * 2));
-			CreateLight(l);
+			//CreateCamera(l);
+			CreateLight();
 
 			positons.ForEach(pos => Draw.CreateSphere(_mainModel3DGroup, pos - l / 2, radius, rowCount, columnCount));
 			Draw.CreateCube(_mainModel3DGroup, Vector.Zero, l);
@@ -103,42 +108,45 @@ namespace modeling_of_solids
 		{
 			var camera = (PerspectiveCamera)Viewport3D.Camera;
 
-			if (e.RightButton == MouseButtonState.Pressed)
+			if (e.LeftButton == MouseButtonState.Pressed)
 			{
-				// Вычисление изменения позиции мыши
+				// Вычисление изменения позиции мыши.
 				var currentPosition = e.GetPosition(Viewport3D);
 				double deltaX = currentPosition.X - _lastPosition.X;
 				double deltaY = currentPosition.Y - _lastPosition.Y;
 
-				// Вычисление матрицы поворота по горизонтальной оси
+				// Вычисление матрицы поворота по горизонтальной оси.
 				var horizontalRotation = new Matrix3D();
-				horizontalRotation.Rotate(new Quaternion(camera.UpDirection, deltaX / 5));
+				horizontalRotation.Rotate(new Quaternion(camera.UpDirection, -deltaX / 5));
 
-				// Вычисление матрицы поворота по вертикальной оси
+				// Вычисление матрицы поворота по вертикальной оси.
 				var verticalRotation = new Matrix3D();
 				var vertical = Vector3D.CrossProduct(camera.LookDirection, camera.UpDirection);
-				verticalRotation.Rotate(new Quaternion(vertical, deltaY / 5));
+				verticalRotation.Rotate(new Quaternion(vertical, -deltaY / 5));
 
-				// Вычисление новой позиции камеры
+				// Вычисление новой позиции камеры.
 				var offset = (Vector3D)camera.Position - _rotateCenter;
 				offset *= horizontalRotation;
 				offset *= verticalRotation;
-				camera.Position = (Point3D)(offset + _rotateCenter);
+				camera.Position = _position = (Point3D)(offset + _rotateCenter); 
 
-				// Поворот камеры
+				// Поворот камеры.
 				camera.LookDirection = _rotateCenter - (Vector3D)camera.Position;
 				camera.UpDirection *= horizontalRotation;
-				camera.UpDirection *= verticalRotation;
+				//camera.UpDirection *= verticalRotation;
+				((DirectionalLight)_mainModel3DGroup.Children[0]).Direction = _rotateCenter - (Vector3D)_position;
 
 				_lastPosition = currentPosition;
 			}
-			if (e.LeftButton == MouseButtonState.Pressed)
+			if (e.RightButton == MouseButtonState.Pressed)
 			{
 				var currentPosition = e.GetPosition(Viewport3D);
 				double deltaX = currentPosition.X - _lastPosition.X;
 				double deltaY = currentPosition.Y - _lastPosition.Y;
 
-				camera.Position = new Point3D(camera.Position.X - deltaX * 0.01, camera.Position.Y + deltaY * 0.01, camera.Position.Z);
+				_rotateCenter = new Vector3D(_rotateCenter.X + deltaX * 0.005, _rotateCenter.Y + deltaY * 0.005, _rotateCenter.Z);
+				_position = new Point3D(camera.Position.X + deltaX * 0.005, camera.Position.Y + deltaY * 0.005, camera.Position.Z);
+				camera.Position = _position;
 
 				_lastPosition = currentPosition;
 			}
@@ -146,8 +154,9 @@ namespace modeling_of_solids
 
 		private void OnMouseWheelSceneVP3D(object sender, MouseWheelEventArgs e)
 		{
-			// Масштабирование камеры
+			// Масштабирование камеры.
 			var camera = (PerspectiveCamera)Viewport3D.Camera;
+
 			_distance -= e.Delta / 120d * 0.1;
 			if (_distance >= 0.1 && _distance <= _distanceMax)
 				camera.Position = (Point3D)(_rotateCenter - camera.LookDirection * _distance);
