@@ -17,7 +17,7 @@ namespace modeling_of_solids
 		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
 		private int _iter, _iterCounter;
 
-		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds;
+		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
 
 		private List<double> _kePoints, _pePoints, _fePoints;
 
@@ -34,7 +34,7 @@ namespace modeling_of_solids
 
 			public FindPrimesInput(object[] args)
 			{
-				Args = new List<object>();
+				Args = new();
 				foreach (var arg in args)
 					Args.Add(arg);
 			}
@@ -87,7 +87,7 @@ namespace modeling_of_solids
 			ChartRt.Refresh();
 
 			// Инициализация сцены для визуализации.
-			_scene = new SceneManager() { Viewport3D = SceneVP3D };
+			_scene = new SceneManager() { Viewport3D = Viewport };
 		}
 
 		#region ---СОБЫТИЯ СОЗДАНИЯ МОДЕЛИ---
@@ -99,8 +99,8 @@ namespace modeling_of_solids
 		/// <param name="e"></param>
 		private void OnCreateModel(object? sender, RoutedEventArgs? e)
 		{
-			var size = NudSize.Value ?? 1;
-			var k = NudDisplacement.Value ?? 0;
+			var size = NudSize.Value;
+			var k = NudDisplacement.Value;
 			_iter = 1;
 
 			BtnCreateModel.IsEnabled = false;
@@ -108,12 +108,12 @@ namespace modeling_of_solids
 			RtbOutputInfo.Document.Blocks.Clear();
 
 			// Инициализация массивов энергий системы.
-			_kePoints = new List<double>();
-			_pePoints = new List<double>();
-			_fePoints = new List<double>();
+			_kePoints = new();
+			_pePoints = new();
+			_fePoints = new();
 
 			// Инициализация списка позиций атомов.
-			_positionsAtomsList = new List<List<Vector>>();
+			_positionsAtomsList = new();
 
 			GC.Collect();
 
@@ -166,10 +166,10 @@ namespace modeling_of_solids
 			else
 			{
 				// Запоминание позиции атомов на 0-ом шаге.
+				_isNewSystem = true;
 				_positionsAtomsList.Add(_atomicModel.GetPositionsAtoms());
 				// Отрисовка атомов на сцене.
-				_scene.CreateCamera(_atomicModel.L);
-				_scene.CreateMeshAtoms(_positionsAtomsList.First(), _atomicModel.L, _atomicModel.GetSigma() / 2);
+				_scene.CreateScene(_positionsAtomsList.First(), _atomicModel.L, _atomicModel.GetSigma() / 2);
 				// Обнуление и блокировка слайдера.
 				SliderTimeStep.Value = 0;
 				SliderTimeStep.IsEnabled = false;
@@ -203,21 +203,21 @@ namespace modeling_of_solids
 		/// <param name="e"></param>
 		private void OnStartCalculation(object? sender, RoutedEventArgs? e)
 		{
-			var countStep = NudCountStep.Value ?? 1000;
-			var snapshotStep = NudSnapshotStep.Value ?? 1;
-			var stepRt = NudStepRt.Value ?? 1000;
-			var T = NudTemperature.Value ?? 300;
-			var stepNorm = NudStepNorm.Value ?? 100;
+			var countStep = NudCountStep.Value;
+			var snapshotStep = NudSnapshotStep.Value;
+			var stepRt = NudStepRt.Value;
+			var T = NudTemperature.Value;
+			var stepNorm = NudStepNorm.Value;
 
 			if (_atomicModel != null)
-				_atomicModel.dt = (NudTimeStep.Value ?? 1) * Math.Pow(10, NudTimeStepOrder.Value ?? -14);
+				_atomicModel.dt = (int)NudTimeStep.Value * Math.Pow(10, (int)NudTimeStepOrder.Value);
 
 			BtnStartCalculation.IsEnabled = false;
 			BtnCancelCalculation.IsEnabled = true;
 
 			// Инициализация массива среднего квадрата смещения.
 			_rt1 = _atomicModel.GetPositionsNonePeriodicAtoms();
-			_rrt = new List<PointD>() { new(0, 0) };
+			_rrt = new() { new(0, 0) };
 			_averT = 0;
 
 			// Очистка графиков.
@@ -284,23 +284,17 @@ namespace modeling_of_solids
 
 				// Проведение перенормировки скоростей, если она включено.
 				if (_isRenormSpeeds && i % stepNorm == 0)
-				{
 					_atomicModel.VelocityNormalization(T);
-					_atomicModel.PulseZeroing();
-				}
 
 				_averT += _atomicModel.T;
 
 				// Вывод информации в UI.
-				var ii = i;
-				Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, () =>
-				{
-					if ((_isSnapshot && ii % snapshotStep == 0) || ii == _iter + countStep - 1)
+				if ((_isSnapshot && i % snapshotStep == 0) || i == _iter + countStep - 1)
+					Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, () =>
 					{
-						RtbOutputInfo.AppendText(TableData(ii));
+						RtbOutputInfo.AppendText(TableData(i));
 						RtbOutputInfo.ScrollToEnd();
-					}
-				});
+					});
 
 				// Запоминание энергий системы на каждом шагу.
 				_kePoints.Add(_atomicModel.Ke);
@@ -336,10 +330,7 @@ namespace modeling_of_solids
 		private void OnBackgroundWorkerRunWorkerCompletedCalculation(object sender, RunWorkerCompletedEventArgs e)
 		{
 			if (e.Cancelled)
-			{
 				MessageBox.Show("Моделирование отменено");
-				//OnCreateModel(null, null);
-			}
 			else if (e.Error != null)
 				MessageBox.Show(e.Error.Message, "Произошла ошибка");
 
@@ -371,6 +362,7 @@ namespace modeling_of_solids
 			ChartRt.Refresh();
 
 			// Настройка слайдера.
+			_isNewSystem = false;
 			SliderTimeStep.IsEnabled = true;
 			SliderTimeStep.Maximum = _positionsAtomsList.Count - 1;
 		}
@@ -389,7 +381,10 @@ namespace modeling_of_solids
 		#region ---СОБЫТИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ СЦЕНОЙ---
 		private void OnValueChangedSliderTimeStep(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
-			_scene.CreateMeshAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.L, _atomicModel.GetSigma() / 2);
+			if (_isNewSystem)
+				_scene.CreateScene(_positionsAtomsList[0], _atomicModel.L, _atomicModel.GetSigma() / 2);
+			else
+				_scene.UpdatePositionsAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.L);
 		}
 		#endregion
 
