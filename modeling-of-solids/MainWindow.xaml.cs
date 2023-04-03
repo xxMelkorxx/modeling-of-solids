@@ -17,6 +17,8 @@ namespace modeling_of_solids
 		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
 		private int _iter, _iterCounter;
 
+		private System.Windows.Forms.Timer _timer;
+
 		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
 
 		private List<double> _kePoints, _pePoints, _fePoints;
@@ -46,6 +48,9 @@ namespace modeling_of_solids
 
 			_bgWorkerCreateModel = (BackgroundWorker)this.FindResource("backgroundWorkerCreateModel");
 			_bgWorkerCalculation = (BackgroundWorker)this.FindResource("backgroundWorkerCalculation");
+
+			_timer = new() { Interval = 30, };
+			_timer.Tick += OnTickTimer;
 		}
 
 		void OnLoadedMainWindow(object sender, RoutedEventArgs e)
@@ -99,6 +104,8 @@ namespace modeling_of_solids
 		/// <param name="e"></param>
 		private void OnCreateModel(object? sender, RoutedEventArgs? e)
 		{
+			if (_timer.Enabled) { _timer.Stop(); }
+
 			var size = NudSize.Value;
 			var k = NudDisplacement.Value;
 			_iter = 1;
@@ -180,6 +187,14 @@ namespace modeling_of_solids
 				BtnCreateModel.IsEnabled = true;
 				BtnStartCalculation.IsEnabled = true;
 				BtnCancelCalculation.IsEnabled = false;
+				BtnToBegin.IsEnabled = false;
+				BtnStepBack.IsEnabled = false;
+				BtnPlayTimer.IsEnabled = false;
+				BtnPauseTimer.IsEnabled = false;
+				BtnStepForward.IsEnabled = false;
+				BtnToEnd.IsEnabled = false;
+				BtnFaster.IsEnabled = false;
+				BtnSlower.IsEnabled = false;
 			}
 		}
 
@@ -361,10 +376,18 @@ namespace modeling_of_solids
 			ChartRt.Plot.Legend(location: Alignment.UpperRight);
 			ChartRt.Refresh();
 
-			// Настройка слайдера.
+			// Настройка панели управления сценой.
 			_isNewSystem = false;
 			SliderTimeStep.IsEnabled = true;
 			SliderTimeStep.Maximum = _positionsAtomsList.Count - 1;
+			BtnToBegin.IsEnabled = false;
+			BtnStepBack.IsEnabled = false;
+			BtnPlayTimer.IsEnabled = true;
+			BtnPauseTimer.IsEnabled = false;
+			BtnStepForward.IsEnabled = true;
+			BtnToEnd.IsEnabled = true;
+			BtnFaster.IsEnabled = false;
+			BtnSlower.IsEnabled = false;
 		}
 
 		/// <summary>
@@ -381,10 +404,97 @@ namespace modeling_of_solids
 		#region ---СОБЫТИЯ ЭЛЕМЕНТОВ УПРАВЛЕНИЯ СЦЕНОЙ---
 		private void OnValueChangedSliderTimeStep(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
+			if (SliderTimeStep.Value == SliderTimeStep.Minimum)
+			{
+				BtnToBegin.IsEnabled = false;
+				BtnStepBack.IsEnabled = false;
+				BtnToEnd.IsEnabled = true;
+				BtnStepForward.IsEnabled = true;
+			}
+			else if (SliderTimeStep.Value == SliderTimeStep.Maximum)
+			{
+				BtnToBegin.IsEnabled = true;
+				BtnStepBack.IsEnabled = true;
+				BtnToEnd.IsEnabled = false;
+				BtnStepForward.IsEnabled = false;
+			}
+			else
+			{
+				BtnToBegin.IsEnabled = true;
+				BtnStepBack.IsEnabled = true;
+				BtnToEnd.IsEnabled = true;
+				BtnStepForward.IsEnabled = true;
+			}
+
 			if (_isNewSystem)
 				_scene.CreateScene(_positionsAtomsList[0], _atomicModel.L, _atomicModel.GetSigma() / 2);
 			else
 				_scene.UpdatePositionsAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.L);
+		}
+
+		private void OnClickBtnToBegin(object sender, RoutedEventArgs e)
+		{
+			SliderTimeStep.Value = SliderTimeStep.Minimum;
+		}
+
+		private void OnClickBtnStepBack(object sender, RoutedEventArgs e)
+		{
+			SliderTimeStep.Value--;
+		}
+
+		private void OnClickBtnPlayTimer(object sender, RoutedEventArgs e)
+		{
+			_timer.Start();
+
+			BtnPlayTimer.IsEnabled = false;
+			BtnPauseTimer.IsEnabled = true;
+			BtnFaster.IsEnabled = _timer.Interval == 1 ? false : true;
+			BtnSlower.IsEnabled = true;
+		}
+
+		private void OnClickBtnPauseTimer(object sender, RoutedEventArgs e)
+		{
+			_timer.Stop();
+
+			BtnPlayTimer.IsEnabled = true;
+			BtnPauseTimer.IsEnabled = false;
+			BtnFaster.IsEnabled = false;
+			BtnSlower.IsEnabled = false;
+		}
+
+		private void OnClickBtnStepForward(object sender, RoutedEventArgs e)
+		{
+			SliderTimeStep.Value++;
+		}
+
+		private void OnClickBtnToEnd(object sender, RoutedEventArgs e)
+		{
+			SliderTimeStep.Value = SliderTimeStep.Maximum;
+		}
+
+		private void OnClickBtnSlower(object sender, RoutedEventArgs e)
+		{
+			_timer.Interval += 5;
+			BtnFaster.IsEnabled = true;
+		}
+
+		private void OnClickBtnFaster(object sender, RoutedEventArgs e)
+		{
+			if (_timer.Interval - 5 <= 1)
+			{
+				_timer.Interval = 1;
+				BtnFaster.IsEnabled = false;
+			}
+			else
+				_timer.Interval -= 5;
+		}
+
+		private void OnTickTimer(object sender, EventArgs e)
+		{
+			if (SliderTimeStep.Value == SliderTimeStep.Maximum)
+				OnClickBtnToBegin(null, null);
+			else
+				SliderTimeStep.Value++;
 		}
 		#endregion
 

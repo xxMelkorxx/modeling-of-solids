@@ -39,6 +39,7 @@ namespace modeling_of_solids
 
 			// Создание атомов.
 			_initPosAtoms = new();
+			var material = Materials.Blue;
 			positons.ForEach(pos =>
 			{
 				_initPosAtoms.Add(pos - l / 2);
@@ -46,7 +47,7 @@ namespace modeling_of_solids
 				{
 					Center = new Point3D(pos.X - l / 2, pos.Y - l / 2, pos.Z - l / 2),
 					Radius = radius,
-					Material = Materials.Blue
+					Material = material
 				};
 				Viewport3D.Items.Add(sphere);
 			});
@@ -58,7 +59,7 @@ namespace modeling_of_solids
 				Width = l,
 				Height = l,
 				Center = rotateCenter,
-				Material = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(128, 200, 200, 200)))
+				Material = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(100, 100, 100, 100)))
 			};
 
 			Viewport3D.Items.Add(box);

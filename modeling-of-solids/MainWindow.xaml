@@ -49,12 +49,74 @@
                 <helix:HelixViewport3D x:Name="Viewport"
                                        Background="White"
                                        RenderOptions.BitmapScalingMode="LowQuality"
-                                       CameraRotationMode="Trackball">
-                </helix:HelixViewport3D>
+                                       CameraRotationMode="Trackball"/>
             </GroupBox>
 
-            <Slider Grid.Row="1" Name="SliderTimeStep" IsEnabled="False"
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="18*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <Slider Grid.Column="0" Name="SliderTimeStep" IsEnabled="False"
                     ValueChanged="OnValueChangedSliderTimeStep"/>
+
+                <Button Grid.Column="1" Name="BtnToBegin" ToolTip="В начало"
+                        IsEnabled="False" Click="OnClickBtnToBegin"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
+                    <Image Source="icons/angle-double-small-left.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Grid.Column="2" Name="BtnStepBack" ToolTip="Шаг назад"
+                        IsEnabled="False" Click="OnClickBtnStepBack"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
+                    <Image Source="icons/angle-small-left.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Grid.Column="3" Name="BtnPlayTimer" ToolTip="Запустить анимацию"
+                        IsEnabled="False" Click="OnClickBtnPlayTimer"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
+                    <Image Source="icons/play-2.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Grid.Column="4" Name="BtnPauseTimer" ToolTip="Останопить анимацию"
+                        IsEnabled="False" Click="OnClickBtnPauseTimer"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
+                    <Image Source="icons/pause.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Grid.Column="5" Name="BtnStepForward" ToolTip="Шаг назад"
+                        IsEnabled="False" Click="OnClickBtnStepForward"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
+                    <Image Source="icons/angle-small-right.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Grid.Column="6" Name="BtnToEnd" ToolTip="В конец"
+                        IsEnabled="False" Click="OnClickBtnToEnd"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
+                    <Image Source="icons/angle-double-small-right.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Grid.Column="7" Name="BtnFaster" ToolTip="Ускорить анимацию"
+                        IsEnabled="False" Click="OnClickBtnFaster"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
+                    <Image Source="icons/angle-double-small-up.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+                <Button Grid.Column="8" Name="BtnSlower" ToolTip="Замедлить анимацию"
+                        IsEnabled="False" Click="OnClickBtnSlower"
+                        Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">                    
+                    <Image Source="icons/angle-double-small-down.png"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Button>
+            </Grid>
 
             <GroupBox Grid.Row="2" Header="Выходная информация">
                 <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Mono"
