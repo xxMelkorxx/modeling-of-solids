@@ -25,7 +25,7 @@
                 {
                     case AtomType.Ar:
                         D = 0.01029;
-						Sigma = 0.3408;
+                        Sigma = 0.3408;
                         break;
                 }
             }

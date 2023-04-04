@@ -22,9 +22,9 @@ namespace modeling_of_solids
 		/// <param name="radius"></param>
 		public void CreateScene(List<Vector> positons, double l, double radius)
 		{
-			Point3D posCamera = new(-l * 3, l, -l * 2);
-			Point3D rotateCenter = new(0, 0, 0);
-			Vector3D dirCamera = rotateCenter - posCamera;
+			var posCamera = new Point3D(-l * 3, l, -l * 2);
+			var rotateCenter = new Point3D(0, 0, 0);
+			var dirCamera = rotateCenter - posCamera;
 
 			// Создание камеры.
 			PerspectiveCamera camera = new()

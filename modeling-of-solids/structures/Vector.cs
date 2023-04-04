@@ -77,8 +77,8 @@ namespace modeling_of_solids
 
         public static Vector operator *(double num, Vector vec) => new(vec.X * num, vec.Y * num, vec.Z * num);
 
-        public static Vector operator /(Vector vec, int num) => new(vec.X / num, vec.Y / num, vec.Z / num);
+        public static Vector operator /(Vector vec, int num) => num != 0 ? new(vec.X / num, vec.Y / num, vec.Z / num) : throw new DivideByZeroException();
 
-        public static Vector operator /(Vector vec, double num) => new(vec.X / num, vec.Y / num, vec.Z / num);
+        public static Vector operator /(Vector vec, double num) => num != 0 ? new(vec.X / num, vec.Y / num, vec.Z / num) : throw new DivideByZeroException();
     }
 }

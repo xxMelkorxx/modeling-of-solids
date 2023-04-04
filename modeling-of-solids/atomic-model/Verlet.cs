@@ -1,4 +1,6 @@
-﻿namespace modeling_of_solids
+﻿using System;
+
+namespace modeling_of_solids
 {
     public partial class AtomicModel
     {
@@ -11,7 +13,7 @@
             Pe = 0;
             _virial = 0;
             Accel();
-            
+
             // Вычисление кинетической энергии.
             Atoms.ForEach(atom => Ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom);
         }
@@ -21,6 +23,9 @@
         /// </summary>
         public void Verlet()
         {
+            if (_potential == null)
+                throw new NullReferenceException();
+
             Ke = 0;
             Pe = 0;
             _virial = 0;
@@ -53,6 +58,9 @@
         /// </summary>
         private void Accel()
         {
+            if (_potential == null)
+                throw new NullReferenceException();
+            
             Atoms.ForEach(atom => atom.Acceleration = Vector.Zero);
 
             for (var i = 0; i < CountAtoms - 1; i++)
@@ -67,16 +75,13 @@
                     // Вычисление расстояния между частицами.
                     var rij = Separation(atomI.Position, atomJ.Position, out var dxdydz);
 
-					if (_potential != null)
-                    {
-						var force = (Vector)_potential.Force(new object[] { rij, dxdydz });
-						sumForce += force;
-						atomI.Acceleration += force / WeightAtom;
-						atomJ.Acceleration -= force / WeightAtom;
+                    var force = (Vector)_potential.Force(new object[] { rij, dxdydz });
+                    sumForce += force;
+                    atomI.Acceleration += force / WeightAtom;
+                    atomJ.Acceleration -= force / WeightAtom;
 
-						Pe += (double)_potential.PotentialEnergy(new object[] { rij });
-					}
-				}
+                    Pe += (double)_potential.PotentialEnergy(new object[] { rij });
+                }
 
                 // Для вычисления давления.
                 _virial += atomI.Position.X * sumForce.X + atomI.Position.Y * sumForce.Y + atomI.Position.Z * sumForce.Z;
