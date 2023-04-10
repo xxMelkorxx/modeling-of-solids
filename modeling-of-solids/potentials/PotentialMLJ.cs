@@ -1,16 +1,33 @@
-﻿namespace modeling_of_solids
+﻿using System;
+
+namespace modeling_of_solids
 {
-	public class PotentialLJ : Potential
+	public class PotentialMLJ : Potential
 	{
 		/// <summary>
 		/// Модуль потенциальной энергии взаимодействия между атомами при равновесии.
 		/// </summary>
-		public double D;
+		public double Sigma;
 
 		/// <summary>
-		/// Расстояние между центрами атомов при котором U(sigma) = 0.
+		/// Равновесное расстояние между центрами атомов
 		/// </summary>
-		public double Sigma;
+		public double R0 => Sigma * Math.Pow(2, 1.0 / 6.0);
+
+		/// <summary>
+		/// Ближний радиус обрезания потенциала.
+		/// </summary>
+		public double R1 => 1.2 * R0;
+
+		/// <summary>
+		/// Дальний радиус обрезания потенциала.
+		/// </summary>
+		public double R2 => 1.8 * R0;
+
+		/// <summary>
+		/// Модуль потенциальной энергии взаимодействия между атомами при равновесии.
+		/// </summary>
+		public double D;
 
 		/// <summary>
 		/// Тип атома.
@@ -36,18 +53,36 @@
 		private AtomType _type;
 
 		/// <summary>
-		/// Вектор силы парного взаимодействия.
+		/// Вычисление силы.
 		/// </summary>
-		/// <param name="args">Массив аргументов: 0 - rij, 1 - dxdydz</param>
+		/// <param name="r"></param>
+		/// <param name="dxdy"></param>
 		/// <returns></returns>
-		public override object Force(object[] args) => FLD((double)args[0]) * (Vector)args[1];
+		public override object Force(object[] args)
+		{
+			var r = (double)args[0];
+			var dxdydz = (Vector)args[1];
+
+			return (r < R1) ? FLD(r) * dxdydz : (r > R2) ? Vector.Zero : FLD(r) * dxdydz * K(r);
+		}
 
 		/// <summary>
-		/// Потенциальная энергия парного взаимодействия.
+		/// Вычисление потенциала.
 		/// </summary>
-		/// <param name="args">Массив аргументов: 0 - rij.</param>
+		/// <param name="r">Расстояние между частицами.</param>
 		/// <returns></returns>
-		public override object PotentialEnergy(object[] args) => PLD((double)args[0]);
+		public override object PotentialEnergy(object[] args)
+		{
+			var r = (double)args[0];
+			return (r < R1) ? PLD(r) : ((r > R2) ? 0 : PLD(r) * K(r));
+		}
+
+		/// <summary>
+		/// Функция обрезания потенциала.
+		/// </summary>
+		/// <param name="r">Расстояние между частицами.</param>
+		/// <returns></returns>
+		private double K(double r) => Math.Pow(1 - (r - R1) * (r - R1) / (R1 - R2) / (R1 - R2), 2);
 
 		/// <summary>
 		/// Потенциал Леннарда-Джонса.

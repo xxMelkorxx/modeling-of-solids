@@ -1,8 +1,15 @@
-﻿namespace modeling_of_solids
+﻿using System.ComponentModel;
+
+namespace modeling_of_solids
 {
     public enum AtomType
     {
-        Ar
+        Ar,
+        Cu,
+        Fe,
+        Au,
+        Si,
+        Ge
     }
 
     public class Atom

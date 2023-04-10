@@ -2,7 +2,9 @@
 {
     public enum PotentialType
     {
-        LennardJones,
+        LJ,
+		MLJ,
+		EAM
     }
 
     public abstract class Potential

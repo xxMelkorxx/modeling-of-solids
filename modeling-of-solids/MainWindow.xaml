@@ -6,6 +6,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=System"
         xmlns:helix="http://helix-toolkit.org/wpf"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:modeling_of_solids"
 
         mc:Ignorable="d"
@@ -70,48 +71,56 @@
 
                 <Button Grid.Column="1" Name="BtnToBegin" ToolTip="В начало"
                         IsEnabled="False" Click="OnClickBtnToBegin"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
                     <Image Source="icons/angle-double-small-left.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
                 <Button Grid.Column="2" Name="BtnStepBack" ToolTip="Шаг назад"
                         IsEnabled="False" Click="OnClickBtnStepBack"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
                     <Image Source="icons/angle-small-left.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
                 <Button Grid.Column="3" Name="BtnPlayTimer" ToolTip="Запустить анимацию"
                         IsEnabled="False" Click="OnClickBtnPlayTimer"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
                     <Image Source="icons/play-2.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
                 <Button Grid.Column="4" Name="BtnPauseTimer" ToolTip="Останопить анимацию"
                         IsEnabled="False" Click="OnClickBtnPauseTimer"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
                     <Image Source="icons/pause.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
                 <Button Grid.Column="5" Name="BtnStepForward" ToolTip="Шаг назад"
                         IsEnabled="False" Click="OnClickBtnStepForward"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
                     <Image Source="icons/angle-small-right.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
                 <Button Grid.Column="6" Name="BtnToEnd" ToolTip="В конец"
                         IsEnabled="False" Click="OnClickBtnToEnd"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
                     <Image Source="icons/angle-double-small-right.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
                 <Button Grid.Column="7" Name="BtnFaster" ToolTip="Ускорить анимацию"
                         IsEnabled="False" Click="OnClickBtnFaster"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">
                     <Image Source="icons/angle-double-small-up.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Button>
                 <Button Grid.Column="8" Name="BtnSlower" ToolTip="Замедлить анимацию"
                         IsEnabled="False" Click="OnClickBtnSlower"
+                        MaxWidth="50" MaxHeight="50"
                         Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}">                    
                     <Image Source="icons/angle-double-small-down.png"
                            RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -135,40 +144,72 @@
         <StackPanel Grid.Column="2">
             <GroupBox Header="Параметры системы">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="4.5*"/>
-                    </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
 
-                    <WrapPanel Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right">
+                    <WrapPanel Grid.Row="0" HorizontalAlignment="Right">
                         <Label>Размер системы</Label>
                         <xctk:IntegerUpDown Name="NudSize" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="1000" Increment="1" Value="3"/>
                     </WrapPanel>
 
-                    <CheckBox Grid.Column="1" Grid.Row="1" Name="CbIsDisplacement" HorizontalAlignment="Right" Margin="0 5 0 0"
+                    <WrapPanel Grid.Row="1" HorizontalAlignment="Right" Margin="0 5 0 0">
+                        <Label>Тип атома</Label>
+                        <ComboBox Name="ComboBoxTypeAtom" SelectedIndex="0" Width="100" Height="25">
+                            <sys:String>Ar (Аргон)</sys:String>
+                            <sys:String>Cu (Медь)</sys:String>
+                            <sys:String>Fe (Железо)</sys:String>
+                            <sys:String>Au (Золото)</sys:String>
+                            <sys:String>Si (Кремний)</sys:String>
+                            <sys:String>Ge (Германий)</sys:String>
+                        </ComboBox>
+                    </WrapPanel>
+
+                    <WrapPanel Grid.Row="2" HorizontalAlignment="Right">
+                        <Label>Тип решётки</Label>
+                        <ComboBox Name="ComboBoxTypeLattice" SelectedIndex="2" Width="100" Height="25">
+                            <sys:String>SC (Простая кубическая)</sys:String>
+                            <sys:String>BCC (Объёмноцентрированная)</sys:String>
+                            <sys:String>FCC (Гранецентрированная)</sys:String>
+                            <sys:String>Diamond (Алмазная)</sys:String>
+                        </ComboBox>
+                    </WrapPanel>
+
+                    <WrapPanel Grid.Row="3" HorizontalAlignment="Right">
+                        <Label>Тип потенциала</Label>
+                        <ComboBox Name="ComboBoxTypePotential" SelectedIndex="0" Width="100" Height="25">
+                            <sys:String>LJ (потенциал Леннарда-Джонса)</sys:String>
+                            <sys:String>MLJ (модифицированный потенциал Леннарда-Джонса)</sys:String>
+                            <sys:String>EAM (потенциал погруженного атома)</sys:String>
+                        </ComboBox>
+                    </WrapPanel>
+
+                    <CheckBox Grid.Row="4" Name="CbIsDisplacement" HorizontalAlignment="Right" Margin="0 5 0 0"
                               Checked="OnCheckedDisplacement"
                               Unchecked="OnUncheckedDisplacement">
                         Задать смещение атомов?
                     </CheckBox>
 
-                    <WrapPanel Grid.Column="1" Grid.Row="2" HorizontalAlignment="Right">
+                    <WrapPanel Grid.Row="5" HorizontalAlignment="Right">
                         <Label>Величина смещения</Label>
                         <xctk:DoubleUpDown Name="NudDisplacement" TextAlignment="Right" Width="100" Height="25" Minimum="0" Maximum="1" Increment="0.01" Value="0.05"
                                            IsEnabled="False" />
                     </WrapPanel>
 
-                    <Button Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" 
-                            Name="BtnCreateModel"
-                            Height="50" Width="50"
+                    <Button Name="BtnCreateModel" Grid.Row="6" HorizontalAlignment="Left"
                             ToolTip="Создать модель"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnCreateModel">
-                        <Image Source="icons/check.png" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <WrapPanel Margin="5 0 0 0" Grid.Row="5">
+                            <Image Source="icons/check.png" Height="50" Width="50" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <Label VerticalAlignment="Center">Создать модель</Label>
+                        </WrapPanel>
                     </Button>
                 </Grid>
             </GroupBox>
@@ -179,7 +220,7 @@
                         <Label>Временной шаг</Label>
                         <xctk:IntegerUpDown Name="NudTimeStep" TextAlignment="Right" Width="40" Height="25" Minimum="1" Maximum="10" Increment="1" Value="1" />
                         <Label>e</Label>
-                        <xctk:IntegerUpDown Name="NudTimeStepOrder" TextAlignment="Right" Width="45" Height="25" Minimum="0" Maximum="-100" Increment="1" Value="-14" />
+                        <xctk:IntegerUpDown Name="NudTimeStepOrder" TextAlignment="Right" Width="45" Height="25" Minimum="-100" Maximum="-10" Increment="1" Value="-14" />
                     </WrapPanel>
 
                     <WrapPanel HorizontalAlignment="Right">
@@ -205,7 +246,7 @@
                         <Label>Шаг расчёта R²</Label>
                         <xctk:IntegerUpDown Name="NudStepRt" 
                                             TextAlignment="Right" Width="100" Height="25" 
-                                            Minimum="10" Maximum="10000" Increment="1000" Value="1000"/>
+                                            Minimum="10" Maximum="10000" Increment="1000" Value="100"/>
                     </WrapPanel>
                 </StackPanel>
             </GroupBox>
