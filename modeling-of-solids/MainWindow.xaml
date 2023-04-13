@@ -32,9 +32,9 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <WpfPlot Grid.Row="0" Name="ChartEnergy"/>
-                <WpfPlot Grid.Row="1" Name="ChartRadDist"/>
-                <WpfPlot Grid.Row="2" Name="ChartRt"/>
+                <WpfPlot Grid.Row="0" Name="ChartEnergy" FontFamily="Cascadia Code"/>
+                <WpfPlot Grid.Row="1" Name="ChartRadDist" FontFamily="Cascadia Code"/>
+                <WpfPlot Grid.Row="2" Name="ChartRt" FontFamily="Cascadia Code"/>
             </Grid>
         </GroupBox>
 
@@ -128,7 +128,7 @@
             </Grid>
 
             <GroupBox Grid.Row="2" Header="Выходная информация">
-                <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Mono"
+                <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Code"
                              IsReadOnly="True" VerticalScrollBarVisibility="Visible" FontSize="12">
                     <RichTextBox.Resources>
                         <Style TargetType="{x:Type Paragraph}">

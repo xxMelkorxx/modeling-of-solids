@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace modeling_of_solids
+﻿namespace modeling_of_solids
 {
     public enum AtomType
     {

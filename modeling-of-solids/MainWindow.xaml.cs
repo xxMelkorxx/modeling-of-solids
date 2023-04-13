@@ -11,23 +11,17 @@ namespace modeling_of_solids
 {
 	public partial class MainWindow : Window
 	{
-		private AtomicModel? _atomicModel;
-
-		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
-		private int _iter, _iterCounter;
-
-		private System.Windows.Forms.Timer _timer;
-
-		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
-
-		private List<double> _kePoints, _pePoints, _fePoints;
-
+		private AtomicModel _atomicModel;
 		private SceneManager _scene;
+		private BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
+		private System.Windows.Forms.Timer _timer;
 		private List<List<Vector>> _positionsAtomsList;
-
 		private List<Vector> _rt1, _rt2;
 		private List<PointD> _rrt;
+		private List<double> _kePoints, _pePoints, _fePoints;
 		private double _averT;
+		private int _iter, _iterCounter;
+		private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
 
 		private class FindPrimesInput
 		{
@@ -176,8 +170,6 @@ namespace modeling_of_solids
 		{
 			if (e.Error != null)
 				MessageBox.Show(e.Error.Message, "Произошла ошибка");
-			else if (_atomicModel == null)
-				throw new NullReferenceException();
 			else
 			{
 				// Запоминание позиции атомов на 0-ом шаге.
@@ -227,9 +219,6 @@ namespace modeling_of_solids
 		/// <param name="e"></param>
 		private void OnStartCalculation(object? sender, RoutedEventArgs? e)
 		{
-			if (_atomicModel == null)
-				throw new NullReferenceException();
-
 			var countStep = NudCountStep.Value;
 			var snapshotStep = NudSnapshotStep.Value;
 			var stepRt = NudStepRt.Value;

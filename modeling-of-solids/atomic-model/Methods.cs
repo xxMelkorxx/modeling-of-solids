@@ -1,6 +1,4 @@
-﻿using ScottPlot.Drawing.Colormaps;
-using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,7 +22,7 @@ namespace modeling_of_solids
 		/// <param name="vec2"></param>
 		/// <param name="dxdydz"></param>
 		/// <returns></returns>
-		private double SeparationSqured(Vector vec1, Vector vec2, out Vector dxdydz)
+		public double SeparationSqured(Vector vec1, Vector vec2, out Vector dxdydz)
 		{
 			dxdydz = vec1 - vec2;
 
@@ -44,7 +42,7 @@ namespace modeling_of_solids
 		/// </summary>
 		/// <param name="pos"></param>
 		/// <returns></returns>
-		private Vector Periodic(Vector pos)
+		public Vector Periodic(Vector pos)
 		{
 			var newPos = Vector.Zero;
 

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>modeling_of_solids</RootNamespace>
-    <Nullable>annotations</Nullable>
+    <Nullable>disable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>True</UseWindowsForms>
     <StartupObject></StartupObject>
