@@ -6,7 +6,7 @@
     <Nullable>disable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>True</UseWindowsForms>
-    <StartupObject></StartupObject>
+    <StartupObject>modeling_of_solids.App</StartupObject>
     <SignAssembly>False</SignAssembly>
     <TargetFrameworks>net7.0-windows</TargetFrameworks>
   </PropertyGroup>
@@ -33,6 +33,14 @@
     <Resource Include="icons\play.png" />
     <Resource Include="icons\unn_logo.ico" />
     <Resource Include="icons\unn_logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="MainWnd.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <XamlRuntime>Wpf</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
 </Project>

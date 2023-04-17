@@ -40,21 +40,21 @@
 		/// </summary>
 		/// <param name="args">Массив аргументов: 0 - rij, 1 - dxdydz</param>
 		/// <returns></returns>
-		public override object Force(object[] args) => FLD((double)args[0]) * (Vector)args[1];
+		public override object Force(object[] args) => FLJ((double)args[0]) * (Vector)args[1];
 
 		/// <summary>
 		/// Потенциальная энергия парного взаимодействия.
 		/// </summary>
 		/// <param name="args">Массив аргументов: 0 - rij.</param>
 		/// <returns></returns>
-		public override object PotentialEnergy(object[] args) => PLD((double)args[0]);
+		public override object PotentialEnergy(object[] args) => PLJ((double)args[0]);
 
 		/// <summary>
 		/// Потенциал Леннарда-Джонса.
 		/// </summary>
 		/// <param name="r">Расстояние между частицами.</param>
 		/// <returns></returns>
-		private double PLD(double r)
+		private double PLJ(double r)
 		{
 			var ri = Sigma / r;
 			var ri3 = ri * ri * ri;
@@ -68,7 +68,7 @@
 		/// </summary>
 		/// <param name="r">Расстояние между частицами.</param>
 		/// <returns></returns>
-		private double FLD(double r)
+		private double FLJ(double r)
 		{
 			var ri = Sigma / r;
 			var ri3 = ri * ri * ri;

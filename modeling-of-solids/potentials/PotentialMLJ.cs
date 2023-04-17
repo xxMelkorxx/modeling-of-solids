@@ -63,7 +63,7 @@ namespace modeling_of_solids
 			var r = (double)args[0];
 			var dxdydz = (Vector)args[1];
 
-			return (r < R1) ? FLD(r) * dxdydz : (r > R2) ? Vector.Zero : FLD(r) * dxdydz * K(r);
+			return (r < R1) ? FLJ(r) * dxdydz : (r > R2) ? Vector.Zero : FLJ(r) * dxdydz * K(r);
 		}
 
 		/// <summary>
@@ -74,7 +74,7 @@ namespace modeling_of_solids
 		public override object PotentialEnergy(object[] args)
 		{
 			var r = (double)args[0];
-			return (r < R1) ? PLD(r) : ((r > R2) ? 0 : PLD(r) * K(r));
+			return (r < R1) ? PLJ(r) : ((r > R2) ? 0 : PLJ(r) * K(r));
 		}
 
 		/// <summary>
@@ -89,7 +89,7 @@ namespace modeling_of_solids
 		/// </summary>
 		/// <param name="r">Расстояние между частицами.</param>
 		/// <returns></returns>
-		private double PLD(double r)
+		private double PLJ(double r)
 		{
 			var ri = Sigma / r;
 			var ri3 = ri * ri * ri;
@@ -103,7 +103,7 @@ namespace modeling_of_solids
 		/// </summary>
 		/// <param name="r">Расстояние между частицами.</param>
 		/// <returns></returns>
-		private double FLD(double r)
+		private double FLJ(double r)
 		{
 			var ri = Sigma / r;
 			var ri3 = ri * ri * ri;

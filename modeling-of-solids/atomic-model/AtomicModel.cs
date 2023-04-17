@@ -106,7 +106,7 @@ namespace modeling_of_solids
 		/// <summary>
 		/// Класс потенциала.
 		/// </summary>
-		private Potential? _potential;
+		private Potential _potential;
 
 		// Параметры симуляции.
 		/// <summary>
