@@ -30,11 +30,13 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <WpfPlot Grid.Row="0" Name="ChartEnergy" FontFamily="Cascadia Code"/>
                 <WpfPlot Grid.Row="1" Name="ChartRadDist" FontFamily="Cascadia Code"/>
                 <WpfPlot Grid.Row="2" Name="ChartRt" FontFamily="Cascadia Code"/>
+                <WpfPlot Grid.Row="3" Name="ChartAutocorrelationSpeed" FontFamily="Cascadia Code"/>
             </Grid>
         </GroupBox>
 

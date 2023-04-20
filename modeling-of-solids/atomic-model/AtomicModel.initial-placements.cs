@@ -1,4 +1,4 @@
-﻿namespace modeling_of_solids
+﻿namespace modeling_of_solids.atomic_model
 {
     /// <summary>
     /// Тип криссталической решётки.
@@ -16,7 +16,7 @@
         /// <summary>
         /// Начальное размещение атомов в кубическую решётку.
         /// </summary>
-        private void InitPlacementSC()
+        private void InitPlacementSc()
         {
             for (var i = 0; i < Size; i++)
             for (var j = 0; j < Size; j++)
@@ -30,7 +30,7 @@
         /// <summary>
         /// Начальное размещение атомов в ОЦК-решётку.
         /// </summary>
-        private void InitPlacementBCC()
+        private void InitPlacementBcc()
         {
             for (var i = 0; i < Size; i++)
             for (var j = 0; j < Size; j++)
@@ -45,7 +45,7 @@
         /// <summary>
         /// Начальное размещение атомов в ГЦК-решётку.
         /// </summary>
-        private void InitPlaсementFCC()
+        private void InitPlaсementFcc()
         {
             for (var i = 0; i < Size; i++)
             for (var j = 0; j < Size; j++)
