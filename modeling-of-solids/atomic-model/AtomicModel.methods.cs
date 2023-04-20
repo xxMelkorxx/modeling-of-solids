@@ -124,13 +124,19 @@ public partial class AtomicModel
     public List<Vector> GetPositionsNonePeriodicAtoms() => Atoms.Select(atom => atom.PositionNonePeriodic).ToList();
 
     /// <summary>
+    /// Получение скоростей атомов.
+    /// </summary>
+    /// <returns></returns>
+    public List<Vector> GetVelocitiesAtoms() => Atoms.Select(atom => atom.Velocity).ToList();
+
+    /// <summary>
     /// Средний квадрат смещения.
     /// </summary>
     /// <param name="rt1"></param>
     /// <param name="rt2"></param>
     /// <returns></returns>
     public double AverageSquareOffset(IEnumerable<Vector> rt1, IEnumerable<Vector> rt2) => rt1.Zip(rt2, (vec1, vec2) => (vec2 - vec1).SquaredMagnitude()).Sum() / CountAtoms;
-
+    
     public double GetSigma() => AtomsType switch
     {
         AtomType.Ar => 0.3408,

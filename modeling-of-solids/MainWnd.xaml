@@ -36,7 +36,7 @@
                 <WpfPlot Grid.Row="0" Name="ChartEnergy" FontFamily="Cascadia Code"/>
                 <WpfPlot Grid.Row="1" Name="ChartRadDist" FontFamily="Cascadia Code"/>
                 <WpfPlot Grid.Row="2" Name="ChartRt" FontFamily="Cascadia Code"/>
-                <WpfPlot Grid.Row="3" Name="ChartAutocorrelationSpeed" FontFamily="Cascadia Code"/>
+                <WpfPlot Grid.Row="3" Name="ChartAcfSpeed" FontFamily="Cascadia Code"/>
             </Grid>
         </GroupBox>
 
@@ -140,7 +140,7 @@
                 </RichTextBox>
             </GroupBox>
 
-            <ProgressBar Grid.Row="3" Name="ProgressBar" Margin="5 5 5 5"/>
+            <ProgressBar Grid.Row="3" Name="ProgressBar" Maximum="1000" Margin="5 5 5 5"/>
         </Grid>
 
         <StackPanel Grid.Column="2">
