@@ -73,13 +73,18 @@ public class PotentialLJ : Potential
     /// <summary>
     /// Потенциал Леннарда-Джонса.
     /// </summary>
-    /// <param name="r">Расстояние между частицами.</param>
+    /// <param name="r2">Расстояние между частицами.</param>
     /// <returns></returns>
-    private double Plj(double r)
+    private double Plj(double r2)
     {
-        var ri = Sigma / r;
-        var ri3 = ri * ri * ri;
-        var ri6 = ri3 * ri3;
+        if (r2 == 0)
+            throw new DivideByZeroException();
+        
+        // var ri = Sigma / r;
+        // var ri3 = ri * ri * ri;
+        // var ri6 = ri3 * ri3;
+        var ri2 = Sigma * Sigma / r2;
+        var ri6 = ri2 * ri2 * ri2;
 
         return 4 * D * ri6 * (ri6 - 1);
     }
@@ -87,14 +92,20 @@ public class PotentialLJ : Potential
     /// <summary>
     /// Cила в потенциале Леннарда-Джонса.
     /// </summary>
-    /// <param name="r">Расстояние между частицами.</param>
+    /// <param name="r2">Расстояние между частицами.</param>
     /// <returns></returns>
-    private double Flj(double r)
+    private double Flj(double r2)
     {
-        var ri = Sigma / r;
-        var ri3 = ri * ri * ri;
-        var ri6 = ri3 * ri3;
+        if (r2 == 0)
+            throw new DivideByZeroException();
+        
+        // var ri = Sigma / r;
+        // var ri3 = ri * ri * ri;
+        // var ri6 = ri3 * ri3;
+        var ri2 = Sigma * Sigma / r2;
+        var ri6 = ri2 * ri2 * ri2;
 
-        return 24 * D * Ev * ri6 * (2 * ri6 - 1) / (r * r);
+        // return 24 * D * Ev * ri6 * (2 * ri6 - 1) / (r * r);
+        return 24 * D * Ev * ri6 * (2 * ri6 - 1) / r2;
     }
 }

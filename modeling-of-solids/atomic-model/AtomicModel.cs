@@ -48,23 +48,24 @@ public partial class AtomicModel
     public double T => 2d / 3d * Ke / (Kb / Ev * CountAtoms);
 
     /// <summary>
-    /// Давление системы.
+    /// Давление системы, рассчитанный через вириал.
     /// </summary>
-    public double P1 => (Ke * Ev + 0.5 * _virial / CountAtoms) / V * 1e9;
+    public double P1 => (CountAtoms * Kb * T + _virial / (CountAtoms * 3)) / V * 1e9;
 
     private double _virial;
 
     /// <summary>
     /// Давление системы.
     /// </summary>
-    public double P2 => (_flux.X + _flux.Y + _flux.Z) / (2 * BoxSize * BoxSize * Dt) * 1e9;
-
-    private Vector _flux;
+    public double P2 => (Flux.X + Flux.Y + Flux.Z) / (2 * BoxSize * BoxSize) * 1e18 / Dt;
+    public Vector Flux;
 
     /// <summary>
     /// Объём системы.
     /// </summary>
     public double V => BoxSize * BoxSize * BoxSize;
+
+    public double Z { get; set; }
 
     /// <summary>
     /// Тип атомов.
@@ -110,6 +111,8 @@ public partial class AtomicModel
     /// </summary>
     public double Dt { get; set; }
 
+    public int CurrentStep { get; set; }
+
     // Константы.
     /// <summary>
     /// 1 эВ в Дж с нм.
@@ -127,6 +130,13 @@ public partial class AtomicModel
     private readonly Random _rnd = new(DateTime.Now.Millisecond);
 
     /// <summary>
+    /// Список начальных координат атомов.
+    /// </summary>
+    private List<Vector> _rt1;
+
+    private List<List<Vector>> _vtList;
+
+    /// <summary>
     /// Создание атомной модели.
     /// </summary>
     /// <param name="size"></param>
@@ -139,6 +149,7 @@ public partial class AtomicModel
         AtomsType = atomType;
         Size = size;
         BoxSize = size * Lattice;
+        CurrentStep = 1;
 
         // Выбор типа решётки.
         InitPlacement(latticeType);
@@ -148,6 +159,9 @@ public partial class AtomicModel
 
         // Начальная инициализация параметров.
         InitCalculation();
+
+        _rt1 = GetPositionsNonePeriodicAtoms();
+        _vtList = new List<List<Vector>> { GetVelocitiesAtoms() };
     }
 
     /// <summary>

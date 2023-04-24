@@ -15,7 +15,7 @@ public partial class AtomicModel
         Atoms.ForEach(atom =>
         {
             var displacement = (-1 * Vector.One + 2 * new Vector(_rnd.NextDouble(), _rnd.NextDouble(), _rnd.NextDouble())) * k * Lattice;
-            _flux = Vector.Zero;
+            Flux = Vector.Zero;
             atom.Position = Periodic(atom.Position + displacement, atom.Velocity * WeightAtom);
             atom.PositionNonePeriodic += displacement;
         });
@@ -127,15 +127,13 @@ public partial class AtomicModel
     /// Получение скоростей атомов.
     /// </summary>
     /// <returns></returns>
-    public List<Vector> GetVelocitiesAtoms() => Atoms.Select(atom => atom.Velocity).ToList();
+    public List<Vector> GetVelocitiesAtoms() => Atoms.Select(atom => atom.Velocity * 1e-9).ToList();
 
     /// <summary>
     /// Средний квадрат смещения.
     /// </summary>
-    /// <param name="rt1"></param>
-    /// <param name="rt2"></param>
     /// <returns></returns>
-    public double AverageSquareOffset(IEnumerable<Vector> rt1, IEnumerable<Vector> rt2) => rt1.Zip(rt2, (vec1, vec2) => (vec2 - vec1).SquaredMagnitude()).Sum() / CountAtoms;
+    public double GetAverageSquareOffset() => _rt1.Zip(GetPositionsNonePeriodicAtoms(), (vec1, vec2) => (vec2 - vec1).SquaredMagnitude()).Sum() / CountAtoms;
     
     public double GetSigma() => AtomsType switch
     {

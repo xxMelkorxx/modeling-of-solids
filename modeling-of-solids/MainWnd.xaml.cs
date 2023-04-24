@@ -14,20 +14,16 @@ namespace modeling_of_solids;
 
 public partial class MainWnd : Window
 {
-    private AtomicModel _atomicModel;
+    private AtomicModel _atomic;
     private SceneManager _scene;
     private readonly BackgroundWorker _bgWorkerCreateModel, _bgWorkerCalculation;
     private readonly System.Windows.Forms.Timer _timer;
     private List<List<Vector>> _positionsAtomsList;
-    private List<List<Vector>> _velositiesAtomsList;
 
-    private List<Vector> _rt1, _rt2;
-
-    //private List<Vector> _vt1, _vt2;
     private List<PointD> _rrt, _zt;
     private List<double> _kePoints, _pePoints, _fePoints;
     private double _averT;
-    private int _iter, _iterCounter;
+    private int _stepCounter;
     private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
     private double _yMaxRb;
 
@@ -46,14 +42,9 @@ public partial class MainWnd : Window
     {
         // Настройка графиков.
         SetUpChart(ChartEnergy, "Графики энергий системы", "Временной шаг", "Энергия (эВ)");
-        SetUpChart(ChartRadDist, "График радиального распределения системы.", "r", "g(r)");
-        SetUpChart(ChartRt, "График  среднего квадрата смещения системы.", "Временной интервал (t)", "Сред. квадрат смещения (R²)");
-        SetUpChart(ChartAcfSpeed, "График автокорреляционной функции скорости.", "", "");
-        ChartEnergy.Refresh();
-        ChartRadDist.Refresh();
-        ChartRt.Refresh();
-        ChartAcfSpeed.Refresh();
-
+        SetUpChart(ChartRadDist, "График радиального распределения системы", "r", "g(r)");
+        SetUpChart(ChartRt, "График  среднего квадрата смещения системы", "Временной интервал (t)", "Сред. квадрат смещения (R²)");
+        SetUpChart(ChartAcfSpeed, "График автокорреляционной функции скорости", "", "");
 
         // Инициализация сцены для визуализации.
         _scene = new SceneManager { Viewport3D = Viewport };
@@ -76,7 +67,7 @@ public partial class MainWnd : Window
         var atomType = (AtomType)ComboBoxTypeAtom.SelectedIndex;
         var latticeType = (LatticeType)ComboBoxTypeLattice.SelectedIndex;
         var potentialType = (PotentialType)ComboBoxTypePotential.SelectedIndex;
-        _iter = 1;
+        //_iter = 1;
 
         BtnCreateModel.IsEnabled = false;
         ProgressBar.Value = 0;
@@ -107,24 +98,24 @@ public partial class MainWnd : Window
         _bgWorkerCreateModel.ReportProgress(250);
 
         // Инициализация системы.
-        _atomicModel = new AtomicModel(size, atomType, latticeType, potentialType);
+        _atomic = new AtomicModel(size, atomType, latticeType, potentialType);
         _bgWorkerCreateModel.ReportProgress(500);
 
         // Применение случайного смещения для атомов.
         if (_isDisplacement)
         {
-            _atomicModel.AtomsDisplacement(k);
+            _atomic.AtomsDisplacement(k);
             _bgWorkerCreateModel.ReportProgress(750);
         }
 
         // Вычисление начальных параметров системы.
-        _atomicModel.InitCalculation();
+        _atomic.InitCalculation();
         _bgWorkerCreateModel.ReportProgress(1000);
 
         // Начальное запоминание энергии системы.
-        _kePoints.Add(_atomicModel.Ke);
-        _pePoints.Add(_atomicModel.Pe);
-        _fePoints.Add(_atomicModel.Fe);
+        _kePoints.Add(_atomic.Ke);
+        _pePoints.Add(_atomic.Pe);
+        _fePoints.Add(_atomic.Fe);
     }
 
     /// <summary>
@@ -141,12 +132,11 @@ public partial class MainWnd : Window
             _isNewSystem = true;
 
             // Запоминание позиции атомов на 0-ом шаге.
-            _positionsAtomsList = new List<List<Vector>> { _atomicModel.GetPositionsAtoms() };
-            _velositiesAtomsList = new List<List<Vector>> { _atomicModel.GetVelocitiesAtoms() };
+            _positionsAtomsList = new List<List<Vector>> { _atomic.GetPositionsAtoms() };
 
             GC.Collect();
             // Отрисовка атомов на сцене.
-            _scene.CreateScene(_positionsAtomsList.First(), _atomicModel.BoxSize, _atomicModel.GetSigma() / 2d);
+            _scene.CreateScene(_positionsAtomsList.First(), _atomic.BoxSize, _atomic.GetSigma() / 2d);
             // Обнуление и блокировка слайдера.
             SliderTimeStep.Value = 0;
             SliderTimeStep.IsEnabled = false;
@@ -155,11 +145,11 @@ public partial class MainWnd : Window
             RtbOutputInfo.AppendText(InitInfoSystem());
 
             // Настройка и отрисовка графика радиального распределения.
-            var rd = _atomicModel.GetRadialDistribution();
+            var rd = _atomic.GetRadialDistribution();
             _yMaxRb = rd.Max(p => p.Y);
             ChartRadDist.Plot.Clear();
             ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
-            ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomicModel.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
+            ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
             ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
             ChartRadDist.Refresh();
 
@@ -204,20 +194,19 @@ public partial class MainWnd : Window
         var T = NudTemperature.Value;
         var stepNorm = NudStepNorm.Value;
 
-        _atomicModel.Dt = (int)NudTimeStep.Value * Math.Pow(10, (int)NudTimeStepOrder.Value);
+        _atomic.Dt = (int)NudTimeStep.Value * Math.Pow(10, (int)NudTimeStepOrder.Value);
 
         BtnStartCalculation.IsEnabled = false;
         BtnCancelCalculation.IsEnabled = true;
 
         // Инициализация массива среднего квадрата смещения.
-        _rt1 = _atomicModel.GetPositionsNonePeriodicAtoms();
         _rrt = new List<PointD> { new(0, 0) };
         _zt = new List<PointD> { new(0, 0) };
         _averT = 0;
 
         // Очистка графиков.
         ChartEnergy.Plot.Clear();
-        ChartEnergy.Plot.SetAxisLimits(_iter, _iter + countStep - 1);
+        ChartEnergy.Plot.SetAxisLimits(_atomic.CurrentStep, _atomic.CurrentStep + countStep - 1);
         ChartEnergy.Refresh();
         ChartRt.Plot.Clear();
         ChartRt.Refresh();
@@ -232,7 +221,7 @@ public partial class MainWnd : Window
         RtbOutputInfo.AppendText(_isRenormSpeeds ? "\nЗапуск перенормировки скоростей...\n" : "\nЗапуск моделирования...\n");
         RtbOutputInfo.AppendText("Количество временных шагов: " + countStep + "\n" + (_isRenormSpeeds ? "Шаг перенормировки: " + stepNorm + "\n" : ""));
         RtbOutputInfo.AppendText(TableHeader());
-        RtbOutputInfo.AppendText(TableData(_iter - 1));
+        RtbOutputInfo.AppendText(TableData(_atomic.CurrentStep - 1, 1));
         RtbOutputInfo.ScrollToEnd();
 
         // Запуск расчётов.
@@ -248,7 +237,7 @@ public partial class MainWnd : Window
     /// <exception cref="ArgumentException"></exception>
     private void OnBackgroundWorkerDoWorkCalculation(object sender, DoWorkEventArgs e)
     {
-        if (_atomicModel == null)
+        if (_atomic == null)
             throw new NullReferenceException();
 
         var input = (FindPrimesInput)(e.Argument ?? throw new ArgumentException("Отсутствуют аргументы"));
@@ -261,91 +250,68 @@ public partial class MainWnd : Window
         // Начальная перенормировка скоростей, если она включено.
         if (_isRenormSpeeds)
         {
-            _atomicModel.InitVelocityNormalization(T);
-            _atomicModel.PulseZeroing();
+            _atomic.InitVelocityNormalization(T);
+            _atomic.PulseZeroing();
         }
 
-        _iterCounter = 0;
+        _stepCounter = 0;
         // Запуск моделирования.
-        for (var i = _iter; i - _iter < countStep; i++)
+        for (var i = _atomic.CurrentStep; i - _atomic.CurrentStep < countStep; i++)
         {
             // Отслеживание отмены моделирования.
             if (_bgWorkerCalculation.CancellationPending)
             {
                 e.Cancel = true;
-                _iter += _iterCounter;
+                _atomic.CurrentStep += _stepCounter;
                 return;
             }
 
             // Расчёт шага методом Верле.
-            _atomicModel.Verlet();
+            _atomic.Verlet();
 
             // Проведение перенормировки скоростей, если она включено.
             if (_isRenormSpeeds && i % stepNorm == 0)
-                _atomicModel.VelocityNormalization(T);
+                _atomic.VelocityNormalization(T);
 
-            // Для рассчёта средней температуры по шагам.
-            _averT += _atomicModel.T;
+            _kePoints.Add(_atomic.Ke);
+            _pePoints.Add(_atomic.Pe);
+            _fePoints.Add(_atomic.Fe);
+            _averT += _atomic.T;
+            _positionsAtomsList.Add(_atomic.GetPositionsAtoms());
 
             // Вывод информации в UI.
-            if ((_isSnapshot && i % snapshotStep == 0) || i == _iter + countStep - 1)
+            if ((_isSnapshot && i % snapshotStep == 0) || i == _atomic.CurrentStep + countStep - 1)
                 Application.Current.Dispatcher.Invoke(DispatcherPriority.Send, () =>
                 {
-                    RtbOutputInfo.AppendText(TableData(i));
+                    RtbOutputInfo.AppendText(TableData(i, _isSnapshot ? snapshotStep : countStep));
                     RtbOutputInfo.ScrollToEnd();
+                    _atomic.Flux = Vector.Zero;
 
                     // Настройка и отрисовка графика радиального распределения.
-                    var rd = _atomicModel.GetRadialDistribution();
+                    var rd = _atomic.GetRadialDistribution();
                     ChartRadDist.Plot.Clear();
                     ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
-                    ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomicModel.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
+                    ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
                     ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
                     ChartRadDist.Refresh();
                 });
 
-            // Запоминание энергий системы на каждом шагу.
-            _kePoints.Add(_atomicModel.Ke);
-            _pePoints.Add(_atomicModel.Pe);
-            _fePoints.Add(_atomicModel.Fe);
-
-            // Запоминание позиций атомов на очередном временном шаге.
-            _positionsAtomsList.Add(_atomicModel.GetPositionsAtoms());
-            _velositiesAtomsList.Add(_atomicModel.GetVelocitiesAtoms());
+            // Расчёт среднего квадрата смещения.
+            if (i % stepRt == 0 || i == _atomic.CurrentStep + countStep - 1)
+                _rrt.Add(new PointD(i - _atomic.CurrentStep + 1, _atomic.GetAverageSquareOffset()));
 
             // Расчёт АКФ скорости.
-            if (_velositiesAtomsList.Count > 10)
-            {
-                double z = 0;
-                var vels = _atomicModel.GetVelocitiesAtoms();
-                for (var j = 0; j < 10; j++)
-                for (var n = 0; n < _atomicModel.CountAtoms; n++)
-                    z += vels[n].X * _velositiesAtomsList[j][n].X + vels[n].Y * _velositiesAtomsList[j][n].Y + vels[n].Z * _velositiesAtomsList[j][n].Z;
-                _zt.Add(new PointD(i - _iter + 1, z * 1e-18 / (_atomicModel.CountAtoms * 10)));
-
-                for (var j = 0; j < 9; j++)
-                for (var n = 0; n < _atomicModel.CountAtoms; n++)
-                    _velositiesAtomsList[j][n] = _velositiesAtomsList[j + 1][n];
-
-                for (var n = 0; n < _atomicModel.CountAtoms; n++)
-                    _velositiesAtomsList[9][n] = vels[n];
-            }
-
-            // Расчёт среднего квадрата смещения.
-            if (i % stepRt == 0 || i == _iter + countStep - 1)
-            {
-                _rt2 = _atomicModel.GetPositionsNonePeriodicAtoms();
-                _rrt.Add(new PointD(i - _iter + 1, Math.Round(_atomicModel.AverageSquareOffset(_rt1, _rt2), 5)));
-            }
-
-            _iterCounter++;
+            _zt.Add(new PointD(i - _atomic.CurrentStep + 1, _atomic.Z));
 
             // Обновление ProgressBar.
             if (i % (countStep / 1000) == 0)
-                _bgWorkerCalculation.ReportProgress((int)((double)(i - _iter) / countStep * 1000d) + 1);
+                _bgWorkerCalculation.ReportProgress((int)((double)(i - _atomic.CurrentStep) / countStep * 1000d) + 1);
+
+            _stepCounter++;
         }
 
         _averT /= countStep;
-        _iter += _iterCounter;
+        _atomic.CurrentStep += _stepCounter;
     }
 
     /// <summary>
@@ -359,11 +325,8 @@ public partial class MainWnd : Window
             MessageBox.Show("Моделирование отменено");
         if (e.Error != null)
             MessageBox.Show(e.Error.Message, "Произошла ошибка");
-        if (_atomicModel == null)
+        if (_atomic == null)
             throw new NullReferenceException();
-
-        BtnStartCalculation.IsEnabled = true;
-        BtnCancelCalculation.IsEnabled = false;
 
         // Отрисовка графика энергий системы.
         ChartEnergy.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
@@ -376,16 +339,16 @@ public partial class MainWnd : Window
         ChartEnergy.Refresh();
 
         // Отрисовка графика радиального распределения.
-        var rd = _atomicModel.GetRadialDistribution();
+        var rd = _atomic.GetRadialDistribution();
         ChartRadDist.Plot.Clear();
         ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
-        ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomicModel.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
+        ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
         ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
         ChartRadDist.Refresh();
 
         // Отрисовка графика среднего квадрата смещения распределения.
         ChartRt.Plot.AddSignalXY(_rrt.Select(p => p.X).ToArray(), _rrt.Select(p => p.Y).ToArray(),
-            color: Color.Blue, label: "Средний квадрат смещения (средняя температура -" + _averT.ToString("F3") + " К)");
+            color: Color.Indigo, label: $"Средний квадрат смещения (средняя температура - {_averT.ToString("F3")} К)");
         ChartRt.Plot.SetAxisLimits(
             xMin: 0, xMax: _rrt.Max(p => p.X) == 0 ? NudStepRt.Value : _rrt.Max(p => p.X),
             yMin: 0, yMax: (_rrt.Max(p => p.Y) == 0 ? 0.1 : _rrt.Max(p => p.Y)) * 1.5);
@@ -401,7 +364,8 @@ public partial class MainWnd : Window
         ChartAcfSpeed.Plot.Legend(location: Alignment.UpperRight);
         ChartAcfSpeed.Refresh();
 
-        // Настройка панели управления сценой.
+        BtnStartCalculation.IsEnabled = true;
+        BtnCancelCalculation.IsEnabled = false;
         _isNewSystem = false;
         SliderTimeStep.IsEnabled = true;
         SliderTimeStep.Maximum = _positionsAtomsList.Count - 1;

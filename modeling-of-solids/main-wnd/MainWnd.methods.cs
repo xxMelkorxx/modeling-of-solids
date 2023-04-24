@@ -20,7 +20,7 @@ public partial class MainWnd
         }
     }
 
-    private void SetUpChart(IPlotControl chart, string title, string labelX, string labelY)
+    private static void SetUpChart(IPlotControl chart, string title, string labelX, string labelY)
     {
         chart.Plot.Title(title);
         chart.Plot.XLabel(labelX);
@@ -30,8 +30,9 @@ public partial class MainWnd
         chart.Plot.XAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
         chart.Plot.YAxis.MinorGrid(enable: true, color: Color.FromArgb(30, Color.Black), lineStyle: LineStyle.Dot);
         chart.Plot.Margins(x: 0.0, y: 0.6);
-        ChartRadDist.Plot.SetAxisLimits(xMin: 0, yMin: 0);
-    } 
+        chart.Plot.SetAxisLimits(xMin: 0, yMin: 0);
+        chart.Refresh();
+    }
 
     /// <summary>
     /// Начальная информация о системе.
@@ -39,19 +40,18 @@ public partial class MainWnd
     /// <returns></returns>
     private string InitInfoSystem()
     {
-        var text = "Структура создана...\n";
-        text += string.Format("Тип атомов - {0}\n", _atomicModel.AtomsType);
-        text += string.Format("Размер структуры (Nx/Ny) - {0}/{0}\n", _atomicModel.Size);
-        text += string.Format("Размер структуры (Lx/Ly) - {0}/{0} нм\n", _atomicModel.BoxSize.ToString("F5"));
-        text += string.Format("Число атомов - {0}\n", _atomicModel.CountAtoms);
-        text += string.Format("Параметр решётки - {0} нм\n", _atomicModel.Lattice);
-        text += string.Format("Кинетическая энергия - {0} эВ\n", _atomicModel.Ke.ToString("F5"));
-        text += string.Format("Потенциальная энергия - {0} эВ\n", _atomicModel.Pe.ToString("F5"));
-        text += string.Format("Полная энергия - {0} эВ\n", _atomicModel.Fe.ToString("F5"));
-        text += string.Format("Температура - {0} К\n", _atomicModel.T.ToString("F1"));
-        text += string.Format("Объём - {0} нм²\n", Math.Round(_atomicModel.V, 5));
-        text += string.Format("Давление - {0} Па\n", _atomicModel.P1.ToString("F1"));
-        return text;
+        return "Структура создана...\n" +
+               $"Тип атомов - {_atomic.AtomsType}\n" +
+               $"Размер структуры (Nx/Ny) - {_atomic.Size}/{_atomic.Size}\n" +
+               $"Размер структуры (Lx/Ly) - {_atomic.BoxSize.ToString("F5")}/{_atomic.BoxSize.ToString("F5")} нм\n" +
+               $"Число атомов - {_atomic.CountAtoms}\n" +
+               $"Параметр решётки - {_atomic.Lattice} нм\n" +
+               $"Кинетическая энергия - {_atomic.Ke.ToString("F5")} эВ\n" +
+               $"Потенциальная энергия - {_atomic.Pe.ToString("F5")} эВ\n" +
+               $"Полная энергия - {_atomic.Fe.ToString("F5")} эВ\n" +
+               $"Температура - {_atomic.T.ToString("F1")} К\n" +
+               $"Объём - {_atomic.V.ToString("F5")} нм²\n" +
+               $"Давление - {_atomic.P1.ToString("F1")} Па\n";
     }
 
     /// <summary>
@@ -60,34 +60,30 @@ public partial class MainWnd
     /// <returns></returns>
     private static string TableHeader()
     {
-        return string.Format("{0} |{1} |{2} |{3} |{4} |{5} |{6} |\n",
-            "Шаг".PadLeft(6),
-            "Кин. энергия (эВ)".PadLeft(18),
-            "Пот. энергия (эВ)".PadLeft(18),
-            "Полн. энергия (эВ)".PadLeft(19),
-            "Температура (К)".PadLeft(16),
-            //"Объём (нм³)".PadLeft(12),
-            "Давление 1 (Па)".PadLeft(15),
-            "Давление 2 (Па)".PadLeft(15)
-        );
+        return $"{"Шаг".PadLeft(6)} |" +
+               $"{"Кин. энергия (эВ)".PadLeft(18)} |" +
+               $"{"Пот. энергия (эВ)".PadLeft(18)} |" +
+               $"{"Полн. энергия (эВ)".PadLeft(19)} |" +
+               $"{"Температура (К)".PadLeft(16)} |" +
+               $"{"Давление 1 (Па)".PadLeft(15)} |" +
+               $"{"Давление 2 (Па)".PadLeft(15)} |\n";
     }
 
     /// <summary>
     /// Вывод данных в таблицу.
     /// </summary>
     /// <param name="i"></param>
+    /// <param name="nsnap"></param>
     /// <returns></returns>
-    private string TableData(int i)
+    private string TableData(int i, int nsnap)
     {
-        return string.Format("{0} |{1} |{2} |{3} |{4} |{5} |{6} |\n",
-            i.ToString().PadLeft(6),
-            _atomicModel.Ke.ToString("F5").PadLeft(18),
-            _atomicModel.Pe.ToString("F5").PadLeft(18),
-            _atomicModel.Fe.ToString("F5").PadLeft(19),
-            _atomicModel.T.ToString("F1").PadLeft(16),
-            //_atomicModel.V.ToString("F5").PadLeft(12),
-            _atomicModel.P1.ToString("F1").PadLeft(15),
-            _atomicModel.P2.ToString("F1").PadLeft(15));
+        return $"{i.ToString().PadLeft(6)} |" +
+               $"{_atomic.Ke.ToString("F5").PadLeft(18)} |" +
+               $"{_atomic.Pe.ToString("F5").PadLeft(18)} |" +
+               $"{_atomic.Fe.ToString("F5").PadLeft(19)} |" +
+               $"{_atomic.T.ToString("F1").PadLeft(16)} |" +
+               $"{_atomic.P1.ToString("F1").PadLeft(15)} |" +
+               $"{(_atomic.P2 / nsnap).ToString("F1").PadLeft(15)} |\n";
     }
 
     /// <summary>

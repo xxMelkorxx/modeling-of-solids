@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 
 namespace modeling_of_solids.atomic_model;
 
@@ -23,23 +22,21 @@ public partial class AtomicModel
     /// </summary>
     public void Verlet()
     {
-        if (_potential == null)
-            throw new NullReferenceException();
-
         Ke = 0;
         Pe = 0;
         _virial = 0;
-        _flux = Vector.Zero;
+        //_flux = Vector.Zero;
 
         Atoms.ForEach(atom =>
         {
             var newPos = atom.Velocity * Dt + 0.5 * atom.Acceleration * Dt * Dt;
-            atom.Position = Periodic(atom.Position + newPos, atom.Velocity * WeightAtom);
+            atom.Position = Periodic(atom.Position + newPos, atom.Velocity * 1e-9 * WeightAtom);
             atom.PositionNonePeriodic += newPos;
         });
 
         Atoms.ForEach(atom => atom.Velocity += 0.5 * atom.Acceleration * Dt);
 
+        // Рассчёт новых ускорений.
         Accel();
 
         Atoms.ForEach(atom =>
@@ -47,39 +44,54 @@ public partial class AtomicModel
             atom.Velocity += 0.5 * atom.Acceleration * Dt;
             Ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom / Ev;
         });
+
+        // Рассчёт АКФ скорости.
+        if (_vtList.Count < 10)
+            _vtList.Add(GetVelocitiesAtoms());
+        else
+        {
+            var currVt = GetVelocitiesAtoms();
+            
+            _vtList.ForEach(vt =>
+            {
+                for (var i = 0; i < CountAtoms; i++)
+                    Z += vt[i].X * currVt[i].X + vt[i].Y * currVt[i].Y + vt[i].Z * currVt[i].Z;
+            });
+            Z /= CountAtoms * 10;
+
+            for (var i = 1; i < _vtList.Count; i++)
+                for (var j = 0; j < CountAtoms; j++)
+                    _vtList[i - 1][j] = _vtList[i][j];
+
+            for (var j = 0; j < CountAtoms; j++)
+                _vtList[9][j] = currVt[j];
+        }
     }
 
     /// <summary>
     /// Вычисление ускорения, pe, virial.
     /// </summary>
-    [SuppressMessage("ReSharper.DPA", "DPA0000: DPA issues")]
     private void Accel()
     {
-        if (_potential == null)
-            throw new NullReferenceException();
-
         Atoms.ForEach(atom => atom.Acceleration = Vector.Zero);
 
         for (var i = 0; i < CountAtoms - 1; i++)
         {
-            var atomI = Atoms[i];
-
             var sumForce = Vector.Zero;
+            
             for (var j = i + 1; j < CountAtoms; j++)
             {
-                var atomJ = Atoms[j];
-
-                var rij = Separation(atomI.Position, atomJ.Position, out var dxdydz);
+                var rij = SeparationSqured(Atoms[i].Position, Atoms[j].Position, out var dxdydz);
 
                 var force = (Vector)_potential.Force(new object[] { rij, dxdydz });
                 sumForce += force;
-                atomI.Acceleration += force / WeightAtom;
-                atomJ.Acceleration -= force / WeightAtom;
+                Atoms[i].Acceleration += force / WeightAtom;
+                Atoms[j].Acceleration -= force / WeightAtom;
 
                 Pe += (double)_potential.PotentialEnergy(new object[] { rij });
             }
 
-            _virial += atomI.Position.X * sumForce.X + atomI.Position.Y * sumForce.Y + atomI.Position.Z * sumForce.Z;
+            _virial += Atoms[i].Position.X * sumForce.X + Atoms[i].Position.Y * sumForce.Y + Atoms[i].Position.Z * sumForce.Z;
         }
     }
 
@@ -127,12 +139,12 @@ public partial class AtomicModel
         if (pos.X > BoxSize)
         {
             newPos.X = pos.X - BoxSize;
-            _flux.X += p.X;
+            Flux.X += p.X;
         }
         else if (pos.X < 0)
         {
             newPos.X = pos.X + BoxSize;
-            _flux.X -= p.X;
+            Flux.X -= p.X;
         }
         else newPos.X = pos.X;
 
@@ -140,12 +152,12 @@ public partial class AtomicModel
         if (pos.Y > BoxSize)
         {
             newPos.Y = pos.Y - BoxSize;
-            _flux.Y += p.Y;
+            Flux.Y += p.Y;
         }
         else if (pos.Y < 0)
         {
             newPos.Y = pos.Y + BoxSize;
-            _flux.Y -= p.Y;
+            Flux.Y -= p.Y;
         }
         else newPos.Y = pos.Y;
 
@@ -153,12 +165,12 @@ public partial class AtomicModel
         if (pos.Z > BoxSize)
         {
             newPos.Z = pos.Z - BoxSize;
-            _flux.Z += p.Z;
+            Flux.Z += p.Z;
         }
         else if (pos.Z < 0)
         {
             newPos.Z = pos.Z + BoxSize;
-            _flux.Z -= p.Z;
+            Flux.Z -= p.Z;
         }
         else newPos.Z = pos.Z;
 

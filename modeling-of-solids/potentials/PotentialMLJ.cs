@@ -91,8 +91,8 @@ public class PotentialMLJ : Potential
     /// <returns></returns>
     public override object PotentialEnergy(object[] args)
     {
-        var r = (double)args[0];
-        return (r < R1) ? Plj(r) : ((r > R2) ? 0 : Plj(r) * K(r));
+        var r2 = (double)args[0];
+        return r2 < R1 ? Plj(r2) : r2 > R2 ? 0 : Plj(r2) * K(double.Sqrt(r2));
     }
 
     /// <summary>
@@ -105,28 +105,32 @@ public class PotentialMLJ : Potential
     /// <summary>
     /// Потенциал Леннарда-Джонса.
     /// </summary>
-    /// <param name="r">Расстояние между частицами.</param>
+    /// <param name="r2">Расстояние между частицами.</param>
     /// <returns></returns>
-    private double Plj(double r)
+    private double Plj(double r2)
     {
-        var ri = Sigma / r;
-        var ri3 = ri * ri * ri;
-        var ri6 = ri3 * ri3;
-
+        // var ri = Sigma / r;
+        // var ri3 = ri * ri * ri;
+        // var ri6 = ri3 * ri3;
+        var ri2 = Sigma * Sigma / r2;
+        var ri6 = ri2 * ri2 * ri2;
+        
         return 4 * D * ri6 * (ri6 - 1);
     }
 
     /// <summary>
     /// Cила в потенциале Леннарда-Джонса.
     /// </summary>
-    /// <param name="r">Расстояние между частицами.</param>
+    /// <param name="r2">Расстояние между частицами.</param>
     /// <returns></returns>
-    private double Flj(double r)
+    private double Flj(double r2)
     {
-        var ri = Sigma / r;
-        var ri3 = ri * ri * ri;
-        var ri6 = ri3 * ri3;
+        // var ri = Sigma / r;
+        // var ri3 = ri * ri * ri;
+        // var ri6 = ri3 * ri3;
+        var ri2 = Sigma * Sigma / r2;
+        var ri6 = ri2 * ri2 * ri2;
 
-        return 24 * D * Ev * ri6 * (2 * ri6 - 1) / (r * r);
+        return 24 * D * Ev * ri6 * (2 * ri6 - 1) / r2;
     }
 }

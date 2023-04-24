@@ -7,7 +7,7 @@ public partial class MainWnd
 {
     private void OnValueChangedSliderTimeStep(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        if (_atomicModel == null)
+        if (_atomic == null)
             throw new NullReferenceException();
 
         if ((int)SliderTimeStep.Value == (int)SliderTimeStep.Minimum)
@@ -33,9 +33,9 @@ public partial class MainWnd
         }
 
         if (_isNewSystem)
-            _scene.CreateScene(_positionsAtomsList[0], _atomicModel.BoxSize, _atomicModel.GetSigma() / 2);
+            _scene.CreateScene(_positionsAtomsList[0], _atomic.BoxSize, _atomic.GetSigma() / 2);
         else
-            _scene.UpdatePositionsAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomicModel.BoxSize);
+            _scene.UpdatePositionsAtoms(_positionsAtomsList[(int)SliderTimeStep.Value], _atomic.BoxSize);
     }
 
     private void OnClickBtnToBegin(object sender, RoutedEventArgs e)
