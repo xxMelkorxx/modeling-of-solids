@@ -12,7 +12,7 @@ using modeling_of_solids.scene_manager;
 
 namespace modeling_of_solids;
 
-public partial class MainWnd : Window
+public partial class MainWnd
 {
     private AtomicModel _atomic;
     private SceneManager _scene;
@@ -20,19 +20,19 @@ public partial class MainWnd : Window
     private readonly System.Windows.Forms.Timer _timer;
     private List<List<Vector>> _positionsAtomsList;
 
-    private List<PointD> _rrt, _zt;
+    private List<PointD> _rrt;
     private List<double> _kePoints, _pePoints, _fePoints;
     private double _averT;
-    private int _stepCounter;
     private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
     private double _yMaxRb;
+    private int _initStep;
 
     public MainWnd()
     {
         InitializeComponent();
 
-        _bgWorkerCreateModel = (BackgroundWorker)this.FindResource("backgroundWorkerCreateModel");
-        _bgWorkerCalculation = (BackgroundWorker)this.FindResource("backgroundWorkerCalculation");
+        _bgWorkerCreateModel = (BackgroundWorker)FindResource("BackgroundWorkerCreateModel");
+        _bgWorkerCalculation = (BackgroundWorker)FindResource("BackgroundWorkerCalculation");
 
         _timer = new() { Interval = 30 };
         _timer.Tick += OnTickTimer;
@@ -67,7 +67,6 @@ public partial class MainWnd : Window
         var atomType = (AtomType)ComboBoxTypeAtom.SelectedIndex;
         var latticeType = (LatticeType)ComboBoxTypeLattice.SelectedIndex;
         var potentialType = (PotentialType)ComboBoxTypePotential.SelectedIndex;
-        //_iter = 1;
 
         BtnCreateModel.IsEnabled = false;
         ProgressBar.Value = 0;
@@ -77,6 +76,16 @@ public partial class MainWnd : Window
         _kePoints = new List<double>();
         _pePoints = new List<double>();
         _fePoints = new List<double>();
+        
+        // Очистка графиков.
+        ChartEnergy.Plot.Clear();
+        ChartEnergy.Refresh();
+        ChartRt.Plot.Clear();
+        ChartRt.Refresh();
+        ChartRadDist.Plot.Clear();
+        ChartRadDist.Refresh();
+        ChartAcfSpeed.Plot.Clear();
+        ChartAcfSpeed.Refresh();
 
         _bgWorkerCreateModel.RunWorkerAsync(new FindPrimesInput(new object[] { size, k, atomType, latticeType, potentialType }));
     }
@@ -99,6 +108,7 @@ public partial class MainWnd : Window
 
         // Инициализация системы.
         _atomic = new AtomicModel(size, atomType, latticeType, potentialType);
+        _initStep = _atomic.CurrentStep;
         _bgWorkerCreateModel.ReportProgress(500);
 
         // Применение случайного смещения для атомов.
@@ -155,6 +165,7 @@ public partial class MainWnd : Window
 
             BtnCreateModel.IsEnabled = true;
             BtnStartCalculation.IsEnabled = true;
+            BtnSaveModel.IsEnabled = true;
             BtnCancelCalculation.IsEnabled = false;
             BtnToBegin.IsEnabled = false;
             BtnStepBack.IsEnabled = false;
@@ -201,12 +212,11 @@ public partial class MainWnd : Window
 
         // Инициализация массива среднего квадрата смещения.
         _rrt = new List<PointD> { new(0, 0) };
-        _zt = new List<PointD> { new(0, 0) };
         _averT = 0;
 
         // Очистка графиков.
         ChartEnergy.Plot.Clear();
-        ChartEnergy.Plot.SetAxisLimits(_atomic.CurrentStep, _atomic.CurrentStep + countStep - 1);
+        ChartEnergy.Plot.SetAxisLimits(_initStep, _initStep + countStep - 1);
         ChartEnergy.Refresh();
         ChartRt.Plot.Clear();
         ChartRt.Refresh();
@@ -218,10 +228,10 @@ public partial class MainWnd : Window
         ProgressBar.Value = 0;
 
         // Вывод начальной информации.
-        RtbOutputInfo.AppendText(_isRenormSpeeds ? "\nЗапуск перенормировки скоростей...\n" : "\nЗапуск моделирования...\n");
-        RtbOutputInfo.AppendText("Количество временных шагов: " + countStep + "\n" + (_isRenormSpeeds ? "Шаг перенормировки: " + stepNorm + "\n" : ""));
+        RtbOutputInfo.AppendText(_isRenormSpeeds ? "\n\nЗапуск перенормировки скоростей...\n" : "\nЗапуск моделирования...\n");
+        RtbOutputInfo.AppendText($"Количество временных шагов: {countStep}\n" + (_isRenormSpeeds ? $"Шаг перенормировки: {stepNorm}\n\n" : "\n"));
         RtbOutputInfo.AppendText(TableHeader());
-        RtbOutputInfo.AppendText(TableData(_atomic.CurrentStep - 1, 1));
+        RtbOutputInfo.AppendText(TableData(_initStep - 1, 1));
         RtbOutputInfo.ScrollToEnd();
 
         // Запуск расчётов.
@@ -254,15 +264,16 @@ public partial class MainWnd : Window
             _atomic.PulseZeroing();
         }
 
-        _stepCounter = 0;
+        _atomic.CurrentStep = 1;
+
         // Запуск моделирования.
-        for (var i = _atomic.CurrentStep; i - _atomic.CurrentStep < countStep; i++)
+        for (var i = _initStep; i - _initStep < countStep; i++)
         {
             // Отслеживание отмены моделирования.
             if (_bgWorkerCalculation.CancellationPending)
             {
                 e.Cancel = true;
-                _atomic.CurrentStep += _stepCounter;
+                _initStep += _atomic.CurrentStep - 1;
                 return;
             }
 
@@ -280,7 +291,7 @@ public partial class MainWnd : Window
             _positionsAtomsList.Add(_atomic.GetPositionsAtoms());
 
             // Вывод информации в UI.
-            if ((_isSnapshot && i % snapshotStep == 0) || i == _atomic.CurrentStep + countStep - 1)
+            if ((_isSnapshot && i % snapshotStep == 0) || i == _initStep + countStep - 1)
                 Application.Current.Dispatcher.Invoke(DispatcherPriority.Send, () =>
                 {
                     RtbOutputInfo.AppendText(TableData(i, _isSnapshot ? snapshotStep : countStep));
@@ -297,21 +308,15 @@ public partial class MainWnd : Window
                 });
 
             // Расчёт среднего квадрата смещения.
-            if (i % stepRt == 0 || i == _atomic.CurrentStep + countStep - 1)
-                _rrt.Add(new PointD(i - _atomic.CurrentStep + 1, _atomic.GetAverageSquareOffset()));
-
-            // Расчёт АКФ скорости.
-            _zt.Add(new PointD(i - _atomic.CurrentStep + 1, _atomic.Z));
+            if (i % stepRt == 0 || i == _initStep + countStep - 1)
+                _rrt.Add(new PointD(i - _initStep + 1, _atomic.GetAverageSquareOffset()));
 
             // Обновление ProgressBar.
-            if (i % (countStep / 1000) == 0)
-                _bgWorkerCalculation.ReportProgress((int)((double)(i - _atomic.CurrentStep) / countStep * 1000d) + 1);
-
-            _stepCounter++;
+            _bgWorkerCalculation.ReportProgress((int)((double)(i - _initStep) / countStep * 1000d) + 1);
         }
 
         _averT /= countStep;
-        _atomic.CurrentStep += _stepCounter;
+        _initStep += _atomic.CurrentStep - 1;
     }
 
     /// <summary>
@@ -329,11 +334,11 @@ public partial class MainWnd : Window
             throw new NullReferenceException();
 
         // Отрисовка графика энергий системы.
-        ChartEnergy.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
-        ChartEnergy.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
         ChartEnergy.Plot.AddSignalConst(_kePoints.ToArray(), color: Color.Red, label: "Кинетическая энергия");
         ChartEnergy.Plot.AddSignalConst(_pePoints.ToArray(), color: Color.Blue, label: "Потенциальная энергия");
         ChartEnergy.Plot.AddSignalConst(_fePoints.ToArray(), color: Color.Green, label: "Полная энергия");
+        ChartEnergy.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
+        ChartEnergy.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
         ChartEnergy.Plot.Margins(x: 0.0, y: 0.6);
         ChartEnergy.Plot.Legend(location: Alignment.UpperRight);
         ChartEnergy.Refresh();
@@ -355,12 +360,12 @@ public partial class MainWnd : Window
         ChartRt.Plot.Legend(location: Alignment.UpperRight);
         ChartRt.Refresh();
 
-        // Отрисовка графика автокорреляционной функции скорости.
-        ChartAcfSpeed.Plot.AddSignalXY(_zt.Select(p => p.X).ToArray(), _zt.Select(p => p.Y).ToArray(),
-            color: Color.Green, label: "Автокорреляционная функция скорости");
-        ChartAcfSpeed.Plot.SetAxisLimits(
-            xMin: 0, xMax: _zt.Max(p => p.X) == 0 ? NudStepRt.Value : _zt.Max(p => p.X),
-            yMin: _zt.Min(p => p.Y), yMax: (_zt.Max(p => p.Y) == 0 ? 0.1 : _zt.Max(p => p.Y)) * 1.5);
+        // Отрисовка графика АКФ скорости.
+        var zt = _atomic.GetAcfs();
+        ChartAcfSpeed.Plot.AddSignal(zt, color: Color.Green, label: "Автокорреляционная функция скорости");
+        ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: zt.Length, yMin: zt.Min() - 0.1, yMax: zt.Max() + 0.1);
+        ChartAcfSpeed.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
+        ChartAcfSpeed.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
         ChartAcfSpeed.Plot.Legend(location: Alignment.UpperRight);
         ChartAcfSpeed.Refresh();
 

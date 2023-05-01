@@ -111,6 +111,9 @@ public partial class AtomicModel
     /// </summary>
     public double Dt { get; set; }
 
+    /// <summary>
+    /// Текущий временной шаг.
+    /// </summary>
     public int CurrentStep { get; set; }
 
     // Константы.
@@ -135,6 +138,9 @@ public partial class AtomicModel
     private List<Vector> _rt1;
 
     private List<List<Vector>> _vtList;
+    private int _countNumber = 150;
+    private int _countRepetition = 5;
+    private int _stepDelay = 10;
 
     /// <summary>
     /// Создание атомной модели.

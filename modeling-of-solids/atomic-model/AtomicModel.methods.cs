@@ -134,7 +134,28 @@ public partial class AtomicModel
     /// </summary>
     /// <returns></returns>
     public double GetAverageSquareOffset() => _rt1.Zip(GetPositionsNonePeriodicAtoms(), (vec1, vec2) => (vec2 - vec1).SquaredMagnitude()).Sum() / CountAtoms;
-    
+
+    /// <summary>
+    /// Рассчёт автокорреляционной функции скорости атомов.
+    /// </summary>
+    /// <returns></returns>
+    public double[] GetAcfs()
+    {
+        var zt = new double[_countNumber];
+        for (var i = 0; i < _countRepetition; i++)
+        for (var j = 0; j < _countNumber; j++)
+        {
+            for (var k = 0; k < CountAtoms; k++)
+                zt[j] += k != 0
+                    ? (_vtList[i * _stepDelay][k].X * _vtList[j + i * _stepDelay][k].X +
+                       _vtList[i * _stepDelay][k].Y * _vtList[j + i * _stepDelay][k].Y +
+                       _vtList[i * _stepDelay][k].Z * _vtList[j + i * _stepDelay][k].Z) / _vtList[i * _stepDelay][k].Magnitude()
+                    : 1;
+            zt[j] /= _countNumber * _countRepetition * CountAtoms;
+        }
+        return zt;
+    }
+
     public double GetSigma() => AtomsType switch
     {
         AtomType.Ar => 0.3408,

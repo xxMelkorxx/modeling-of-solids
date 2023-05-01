@@ -46,26 +46,12 @@ public partial class AtomicModel
         });
 
         // Рассчёт АКФ скорости.
-        if (_vtList.Count < 10)
+        if (CurrentStep == 1)
+            _vtList.Clear();
+        if (_vtList.Count < _countNumber + _countRepetition * _stepDelay)
             _vtList.Add(GetVelocitiesAtoms());
-        else
-        {
-            var currVt = GetVelocitiesAtoms();
-            
-            _vtList.ForEach(vt =>
-            {
-                for (var i = 0; i < CountAtoms; i++)
-                    Z += vt[i].X * currVt[i].X + vt[i].Y * currVt[i].Y + vt[i].Z * currVt[i].Z;
-            });
-            Z /= CountAtoms * 10;
 
-            for (var i = 1; i < _vtList.Count; i++)
-                for (var j = 0; j < CountAtoms; j++)
-                    _vtList[i - 1][j] = _vtList[i][j];
-
-            for (var j = 0; j < CountAtoms; j++)
-                _vtList[9][j] = currVt[j];
-        }
+        CurrentStep++;
     }
 
     /// <summary>
@@ -78,7 +64,7 @@ public partial class AtomicModel
         for (var i = 0; i < CountAtoms - 1; i++)
         {
             var sumForce = Vector.Zero;
-            
+
             for (var j = i + 1; j < CountAtoms; j++)
             {
                 var rij = SeparationSqured(Atoms[i].Position, Atoms[j].Position, out var dxdydz);

@@ -7,7 +7,6 @@
         xmlns:cm="clr-namespace:System.ComponentModel;assembly=System"
         xmlns:helix="http://helix-toolkit.org/wpf"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        xmlns:local="clr-namespace:modeling_of_solids"
 
         mc:Ignorable="d"
         Title="ННГУ ИСИТ | Моделирование методом молекулярной динамики"
@@ -208,7 +207,7 @@
                             ToolTip="Создать модель"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
                             Click="OnCreateModel">
-                        <WrapPanel Margin="5 0 0 0" Grid.Row="5">
+                        <WrapPanel Margin="5 0 0 0">
                             <Image Source="icons/check.png" Height="50" Width="50" RenderOptions.BitmapScalingMode="HighQuality"/>
                             <Label VerticalAlignment="Center">Создать модель</Label>
                         </WrapPanel>
@@ -303,18 +302,37 @@
                         </Button>
                         <Label VerticalAlignment="Center">Отмена моделирования</Label>
                     </WrapPanel>
+                    
+                    <WrapPanel>
+                        <Button Name="BtnSaveModel" IsEnabled="False" Width="50" Height="50"
+                                ToolTip="Сохранить модель"
+                                Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                                Click="OnClickBtnSaveModel">
+                            <Image Source="icons/download.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                        <Label VerticalAlignment="Center">Сохранить</Label>
+                        <Button Name="BtnLoadModel" Width="50" Height="50"
+                                ToolTip="Загрузить модель"
+                                Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                                Click="OnClickBtnLoadModel">
+                            <Image Source="icons/upload.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                        <Label VerticalAlignment="Center">Загрузить</Label>
+                    </WrapPanel>
                 </StackPanel>
             </GroupBox>
         </StackPanel>
     </Grid>
 
     <Window.Resources>
-        <cm:BackgroundWorker x:Key="backgroundWorkerCreateModel"
+        <cm:BackgroundWorker x:Key="BackgroundWorkerCreateModel"
                              WorkerReportsProgress="True"
                              DoWork="OnBackgroundWorkerDoWorkCreateModel"
                              RunWorkerCompleted="OnBackgroundWorkerRunWorkerCompletedCreateModel"
                              ProgressChanged="OnBackgroundWorkerProgressChangedCreateModel"/>
-        <cm:BackgroundWorker x:Key="backgroundWorkerCalculation"
+        <cm:BackgroundWorker x:Key="BackgroundWorkerCalculation"
                              WorkerReportsProgress="True"
                              WorkerSupportsCancellation="True"
                              DoWork="OnBackgroundWorkerDoWorkCalculation"

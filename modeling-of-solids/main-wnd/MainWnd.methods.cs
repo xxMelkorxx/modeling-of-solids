@@ -65,8 +65,8 @@ public partial class MainWnd
                $"{"Пот. энергия (эВ)".PadLeft(18)} |" +
                $"{"Полн. энергия (эВ)".PadLeft(19)} |" +
                $"{"Температура (К)".PadLeft(16)} |" +
-               $"{"Давление 1 (Па)".PadLeft(15)} |" +
-               $"{"Давление 2 (Па)".PadLeft(15)} |\n";
+               $"{"Давление 1 (Па)".PadLeft(16)} |" +
+               $"{"Давление 2 (Па)".PadLeft(16)} |\n";
     }
 
     /// <summary>
@@ -82,8 +82,8 @@ public partial class MainWnd
                $"{_atomic.Pe.ToString("F5").PadLeft(18)} |" +
                $"{_atomic.Fe.ToString("F5").PadLeft(19)} |" +
                $"{_atomic.T.ToString("F1").PadLeft(16)} |" +
-               $"{_atomic.P1.ToString("F1").PadLeft(15)} |" +
-               $"{(_atomic.P2 / nsnap).ToString("F1").PadLeft(15)} |\n";
+               $"{_atomic.P1.ToString("F1").PadLeft(16)} |" +
+               $"{(_atomic.P2 / nsnap).ToString("F1").PadLeft(16)} |\n";
     }
 
     /// <summary>
