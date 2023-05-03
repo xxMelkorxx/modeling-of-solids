@@ -21,7 +21,7 @@ public partial class MainWnd
     private List<List<Vector>> _positionsAtomsList;
 
     private List<PointD> _rrt;
-    private List<double> _kePoints, _pePoints, _fePoints;
+    private List<double> _keValues, _peValues, _feValues;
     private double _averT;
     private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
     private double _yMaxRb;
@@ -41,10 +41,10 @@ public partial class MainWnd
     private void OnLoadedMainWindow(object sender, RoutedEventArgs e)
     {
         // Настройка графиков.
-        SetUpChart(ChartEnergy, "Графики энергий системы", "Временной шаг", "Энергия (эВ)");
-        SetUpChart(ChartRadDist, "График радиального распределения системы", "r", "g(r)");
-        SetUpChart(ChartRt, "График  среднего квадрата смещения системы", "Временной интервал (t)", "Сред. квадрат смещения (R²)");
-        SetUpChart(ChartAcfSpeed, "График автокорреляционной функции скорости", "", "");
+        SetUpChart(ChartEnergy, "Графики энергий системы", "Время (пс)", "Энергия (эВ)");
+        SetUpChart(ChartRadDist, "График радиального распределения системы", "r, нм", "g(r)");
+        SetUpChart(ChartRt, "График  среднего квадрата смещения системы", "Время (пс)", "Сред. квадрат смещения (R²)");
+        SetUpChart(ChartAcfSpeed, "График автокорреляционной функции скорости", "Время (пс)", "Норм. АКФ скорости (Z)");
 
         // Инициализация сцены для визуализации.
         _scene = new SceneManager { Viewport3D = Viewport };
@@ -73,10 +73,10 @@ public partial class MainWnd
         RtbOutputInfo.Document.Blocks.Clear();
 
         // Инициализация массивов энергий системы.
-        _kePoints = new List<double>();
-        _pePoints = new List<double>();
-        _fePoints = new List<double>();
-        
+        _keValues = new List<double>();
+        _peValues = new List<double>();
+        _feValues = new List<double>();
+
         // Очистка графиков.
         ChartEnergy.Plot.Clear();
         ChartEnergy.Refresh();
@@ -123,9 +123,9 @@ public partial class MainWnd
         _bgWorkerCreateModel.ReportProgress(1000);
 
         // Начальное запоминание энергии системы.
-        _kePoints.Add(_atomic.Ke);
-        _pePoints.Add(_atomic.Pe);
-        _fePoints.Add(_atomic.Fe);
+        _keValues.Add(_atomic.Ke);
+        _peValues.Add(_atomic.Pe);
+        _feValues.Add(_atomic.Fe);
     }
 
     /// <summary>
@@ -205,7 +205,11 @@ public partial class MainWnd
         var T = NudTemperature.Value;
         var stepNorm = NudStepNorm.Value;
 
-        _atomic.Dt = (int)NudTimeStep.Value * Math.Pow(10, (int)NudTimeStepOrder.Value);
+        _atomic.Dt = (NudTimeStep.Value ?? 0.01) * 1e-12;
+        _atomic.CountNumberAcf = (NudCountNumberAcf.Value ?? 150) + 1;
+        _atomic.CountRepeatAcf = NudCountRepeatAcf.Value ?? 5;
+        _atomic.StepRepeatAcf = NudStepRepeatAcf.Value ?? 10;
+        _atomic.InitPotential((PotentialType)ComboBoxTypePotential.SelectedIndex);
 
         BtnStartCalculation.IsEnabled = false;
         BtnCancelCalculation.IsEnabled = true;
@@ -216,7 +220,7 @@ public partial class MainWnd
 
         // Очистка графиков.
         ChartEnergy.Plot.Clear();
-        ChartEnergy.Plot.SetAxisLimits(_initStep, _initStep + countStep - 1);
+        ChartEnergy.Plot.SetAxisLimits(_initStep * _atomic.Dt * 1e12, (_initStep + countStep - 1) * _atomic.Dt * 1e12);
         ChartEnergy.Refresh();
         ChartRt.Plot.Clear();
         ChartRt.Refresh();
@@ -284,9 +288,9 @@ public partial class MainWnd
             if (_isRenormSpeeds && i % stepNorm == 0)
                 _atomic.VelocityNormalization(T);
 
-            _kePoints.Add(_atomic.Ke);
-            _pePoints.Add(_atomic.Pe);
-            _fePoints.Add(_atomic.Fe);
+            _keValues.Add(_atomic.Ke);
+            _peValues.Add(_atomic.Pe);
+            _feValues.Add(_atomic.Fe);
             _averT += _atomic.T;
             _positionsAtomsList.Add(_atomic.GetPositionsAtoms());
 
@@ -334,9 +338,9 @@ public partial class MainWnd
             throw new NullReferenceException();
 
         // Отрисовка графика энергий системы.
-        ChartEnergy.Plot.AddSignalConst(_kePoints.ToArray(), color: Color.Red, label: "Кинетическая энергия");
-        ChartEnergy.Plot.AddSignalConst(_pePoints.ToArray(), color: Color.Blue, label: "Потенциальная энергия");
-        ChartEnergy.Plot.AddSignalConst(_fePoints.ToArray(), color: Color.Green, label: "Полная энергия");
+        ChartEnergy.Plot.AddSignal(_keValues.ToArray(), 1 / (_atomic.Dt * 1e12), Color.Red, "Кинетическая энергия");
+        ChartEnergy.Plot.AddSignal(_peValues.ToArray(), 1 / (_atomic.Dt * 1e12), Color.Blue, "Потенциальная энергия");
+        ChartEnergy.Plot.AddSignal(_feValues.ToArray(), 1 / (_atomic.Dt * 1e12), Color.Green, "Полная энергия");
         ChartEnergy.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
         ChartEnergy.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
         ChartEnergy.Plot.Margins(x: 0.0, y: 0.6);
@@ -352,18 +356,18 @@ public partial class MainWnd
         ChartRadDist.Refresh();
 
         // Отрисовка графика среднего квадрата смещения распределения.
-        ChartRt.Plot.AddSignalXY(_rrt.Select(p => p.X).ToArray(), _rrt.Select(p => p.Y).ToArray(),
-            color: Color.Indigo, label: $"Средний квадрат смещения (средняя температура - {_averT.ToString("F3")} К)");
+        ChartRt.Plot.AddSignalXY(_rrt.Select(p => p.X * _atomic.Dt * 1e12).ToArray(), _rrt.Select(p => p.Y).ToArray(), 
+            Color.Indigo, $"Средний квадрат смещения (средняя температура - {_averT.ToString("F3")} К)");
         ChartRt.Plot.SetAxisLimits(
-            xMin: 0, xMax: _rrt.Max(p => p.X) == 0 ? NudStepRt.Value : _rrt.Max(p => p.X),
+            xMin: 0, xMax: (_rrt.Max(p => p.X) == 0 ? NudStepRt.Value : _rrt.Max(p => p.X)) * _atomic.Dt * 1e12,
             yMin: 0, yMax: (_rrt.Max(p => p.Y) == 0 ? 0.1 : _rrt.Max(p => p.Y)) * 1.5);
         ChartRt.Plot.Legend(location: Alignment.UpperRight);
         ChartRt.Refresh();
 
         // Отрисовка графика АКФ скорости.
         var zt = _atomic.GetAcfs();
-        ChartAcfSpeed.Plot.AddSignal(zt, color: Color.Green, label: "Автокорреляционная функция скорости");
-        ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: zt.Length, yMin: zt.Min() - 0.1, yMax: zt.Max() + 0.1);
+        ChartAcfSpeed.Plot.AddSignal(zt, 1 / (_atomic.Dt * 1e12), Color.Green, "Автокорреляционная функция скорости");
+        ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12, yMin: -1, yMax: 1);
         ChartAcfSpeed.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
         ChartAcfSpeed.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
         ChartAcfSpeed.Plot.Legend(location: Alignment.UpperRight);

@@ -4,23 +4,22 @@ using modeling_of_solids.potentials;
 
 namespace modeling_of_solids.atomic_model;
 
-[Serializable]
 public partial class AtomicModel
 {
     /// <summary>
     /// Список атомов.
     /// </summary>
-    public List<Atom> Atoms { get; private set; }
+    public List<Atom> Atoms { get; set; }
 
     /// <summary>
     /// Размер расчётной ячейки.
     /// </summary>
-    public int Size { get; private set; }
+    public int Size { get; set; }
 
     /// <summary>
     /// Размер расчётной ячейки (нм).
     /// </summary>
-    public double BoxSize { get; private set; }
+    public double BoxSize { get; set; }
 
     /// <summary>
     /// Число атомов.
@@ -30,12 +29,12 @@ public partial class AtomicModel
     /// <summary>
     /// Кинетическая энергия системы.
     /// </summary>
-    public double Ke { get; private set; }
+    public double Ke { get; set; }
 
     /// <summary>
     /// Потенциальная энергия системы.
     /// </summary>
-    public double Pe { get; private set; }
+    public double Pe { get; set; }
 
     /// <summary>
     /// Полная энергия системы.
@@ -51,13 +50,13 @@ public partial class AtomicModel
     /// Давление системы, рассчитанный через вириал.
     /// </summary>
     public double P1 => (CountAtoms * Kb * T + _virial / (CountAtoms * 3)) / V * 1e9;
-
     private double _virial;
 
     /// <summary>
     /// Давление системы.
     /// </summary>
     public double P2 => (Flux.X + Flux.Y + Flux.Z) / (2 * BoxSize * BoxSize) * 1e18 / Dt;
+
     public Vector Flux;
 
     /// <summary>
@@ -65,12 +64,10 @@ public partial class AtomicModel
     /// </summary>
     public double V => BoxSize * BoxSize * BoxSize;
 
-    public double Z { get; set; }
-
     /// <summary>
     /// Тип атомов.
     /// </summary>
-    public AtomType AtomsType { get; }
+    public AtomType AtomsType { get; set; }
 
     /// <summary>
     /// Параметр решётки
@@ -137,10 +134,25 @@ public partial class AtomicModel
     /// </summary>
     private List<Vector> _rt1;
 
+    /// <summary>
+    /// Список скоростей атомв в разные моменты времени.
+    /// </summary>
     private List<List<Vector>> _vtList;
-    private int _countNumber = 150;
-    private int _countRepetition = 5;
-    private int _stepDelay = 10;
+
+    /// <summary>
+    /// Число отсчётов.
+    /// </summary>
+    public int CountNumberAcf;
+
+    /// <summary>
+    /// Число повторений.
+    /// </summary>
+    public int CountRepeatAcf;
+
+    /// <summary>
+    /// Шаг повторений подсчёта.
+    /// </summary>
+    public int StepRepeatAcf;
 
     /// <summary>
     /// Создание атомной модели.
@@ -197,7 +209,7 @@ public partial class AtomicModel
     /// <summary>
     /// Инициализация потенциала.
     /// </summary>
-    private void InitPotential(PotentialType potentialType)
+    public void InitPotential(PotentialType potentialType)
     {
         _potential = potentialType switch
         {

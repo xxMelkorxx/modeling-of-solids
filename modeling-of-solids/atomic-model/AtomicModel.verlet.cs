@@ -48,7 +48,7 @@ public partial class AtomicModel
         // Рассчёт АКФ скорости.
         if (CurrentStep == 1)
             _vtList.Clear();
-        if (_vtList.Count < _countNumber + _countRepetition * _stepDelay)
+        if (_vtList.Count < CountNumberAcf + CountRepeatAcf * StepRepeatAcf)
             _vtList.Add(GetVelocitiesAtoms());
 
         CurrentStep++;

@@ -61,12 +61,12 @@ public partial class MainWnd
     private static string TableHeader()
     {
         return $"{"Шаг".PadLeft(6)} |" +
-               $"{"Кин. энергия (эВ)".PadLeft(18)} |" +
-               $"{"Пот. энергия (эВ)".PadLeft(18)} |" +
-               $"{"Полн. энергия (эВ)".PadLeft(19)} |" +
-               $"{"Температура (К)".PadLeft(16)} |" +
-               $"{"Давление 1 (Па)".PadLeft(16)} |" +
-               $"{"Давление 2 (Па)".PadLeft(16)} |\n";
+               $"{"Кин.энергия(эВ)".PadLeft(16)} |" +
+               $"{"Пот.энергия(эВ)".PadLeft(16)} |" +
+               $"{"Полн.энергия(эВ)".PadLeft(17)} |" +
+               $"{"Температура(К)".PadLeft(15)} |" +
+               $"{"Давление 1(Па)".PadLeft(15)} |" +
+               $"{"Давление 2(Па)".PadLeft(15)} |\n";
     }
 
     /// <summary>
@@ -78,12 +78,12 @@ public partial class MainWnd
     private string TableData(int i, int nsnap)
     {
         return $"{i.ToString().PadLeft(6)} |" +
-               $"{_atomic.Ke.ToString("F5").PadLeft(18)} |" +
-               $"{_atomic.Pe.ToString("F5").PadLeft(18)} |" +
-               $"{_atomic.Fe.ToString("F5").PadLeft(19)} |" +
-               $"{_atomic.T.ToString("F1").PadLeft(16)} |" +
-               $"{_atomic.P1.ToString("F1").PadLeft(16)} |" +
-               $"{(_atomic.P2 / nsnap).ToString("F1").PadLeft(16)} |\n";
+               $"{_atomic.Ke.ToString("F5").PadLeft(16)} |" +
+               $"{_atomic.Pe.ToString("F5").PadLeft(16)} |" +
+               $"{_atomic.Fe.ToString("F5").PadLeft(17)} |" +
+               $"{_atomic.T.ToString("F1").PadLeft(15)} |" +
+               $"{_atomic.P1.ToString("F1").PadLeft(15)} |" +
+               $"{(_atomic.P2 / nsnap).ToString("F1").PadLeft(15)} |\n";
     }
 
     /// <summary>

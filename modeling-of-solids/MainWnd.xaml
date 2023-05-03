@@ -13,7 +13,7 @@
         Icon="/icons/unn_logo.ico"
         RenderOptions.BitmapScalingMode="HighQuality"
         WindowState="Maximized" 
-        FontSize="14" FontFamily="Segoe UI Semibold"
+        FontSize="13" FontFamily="JetBrains Mono"
         Loaded="OnLoadedMainWindow">
 
     <Grid Margin="5,0,5,0">
@@ -32,10 +32,10 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <WpfPlot Grid.Row="0" Name="ChartEnergy" FontFamily="Cascadia Code"/>
-                <WpfPlot Grid.Row="1" Name="ChartRadDist" FontFamily="Cascadia Code"/>
-                <WpfPlot Grid.Row="2" Name="ChartRt" FontFamily="Cascadia Code"/>
-                <WpfPlot Grid.Row="3" Name="ChartAcfSpeed" FontFamily="Cascadia Code"/>
+                <WpfPlot Grid.Row="0" Name="ChartEnergy" FontFamily="JetBrains Mono"/>
+                <WpfPlot Grid.Row="1" Name="ChartRadDist" FontFamily="JetBrains Mono"/>
+                <WpfPlot Grid.Row="2" Name="ChartRt" FontFamily="JetBrains Mono"/>
+                <WpfPlot Grid.Row="3" Name="ChartAcfSpeed" FontFamily="JetBrains Mono"/>
             </Grid>
         </GroupBox>
 
@@ -47,7 +47,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <GroupBox Name="ViewportGroupBox" Grid.Row="0" Header="Визуализация">
+            <GroupBox Grid.Row="0" Header="Визуализация">
                 <helix:HelixViewport3D x:Name="Viewport"
                                        Background="White"
                                        RenderOptions.BitmapScalingMode="LowQuality"
@@ -129,7 +129,7 @@
             </Grid>
 
             <GroupBox Grid.Row="2" Header="Выходная информация">
-                <RichTextBox Name="RtbOutputInfo"  FontFamily="Cascadia Code"
+                <RichTextBox Name="RtbOutputInfo"  FontFamily="JetBrains Mono Bold"
                              IsReadOnly="True" VerticalScrollBarVisibility="Visible" FontSize="12">
                     <RichTextBox.Resources>
                         <Style TargetType="{x:Type Paragraph}">
@@ -146,7 +146,6 @@
             <GroupBox Header="Параметры системы">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
@@ -197,21 +196,11 @@
                         Задать смещение атомов?
                     </CheckBox>
 
-                    <WrapPanel Grid.Row="5" HorizontalAlignment="Right">
+                    <WrapPanel Grid.Row="5" HorizontalAlignment="Right" Margin="0 5 0 0">
                         <Label>Величина смещения</Label>
                         <xctk:DoubleUpDown Name="NudDisplacement" TextAlignment="Right" Width="100" Height="25" Minimum="0" Maximum="1" Increment="0.01" Value="0.05"
                                            IsEnabled="False" />
                     </WrapPanel>
-
-                    <Button Name="BtnCreateModel" Grid.Row="6" HorizontalAlignment="Left"
-                            ToolTip="Создать модель"
-                            Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
-                            Click="OnCreateModel">
-                        <WrapPanel Margin="5 0 0 0">
-                            <Image Source="icons/check.png" Height="50" Width="50" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <Label VerticalAlignment="Center">Создать модель</Label>
-                        </WrapPanel>
-                    </Button>
                 </Grid>
             </GroupBox>
 
@@ -219,14 +208,16 @@
                 <StackPanel>
                     <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
                         <Label>Временной шаг</Label>
-                        <xctk:IntegerUpDown Name="NudTimeStep" TextAlignment="Right" Width="40" Height="25" Minimum="1" Maximum="10" Increment="1" Value="1" />
-                        <Label>e</Label>
-                        <xctk:IntegerUpDown Name="NudTimeStepOrder" TextAlignment="Right" Width="45" Height="25" Minimum="-100" Maximum="-10" Increment="1" Value="-14" />
+                        <xctk:DoubleUpDown Name="NudTimeStep" TextAlignment="Right" Width="75" Height="25" Minimum="0.0001" Maximum="1" Increment="0.01" Value="0.02" />
+                        <Label>пс</Label>
                     </WrapPanel>
 
                     <WrapPanel HorizontalAlignment="Right">
                         <Label>Число шагов</Label>
-                        <xctk:IntegerUpDown Name="NudCountStep" TextAlignment="Right" Width="100" Height="25" Minimum="1" Maximum="10000000" Increment="1000" Value="1000" />
+                        <xctk:IntegerUpDown Name="NudCountStep" 
+                                            TextAlignment="Right" Width="100" Height="25" 
+                                            Minimum="1" Maximum="10000000" Increment="1000" Value="1000"
+                                            ValueChanged="OnValueChangedNudCountStep"/>
                     </WrapPanel>
 
                     <CheckBox Name="CbIsSnapshot"
@@ -236,11 +227,12 @@
                         Выводить информацию?
                     </CheckBox>
 
-                    <WrapPanel HorizontalAlignment="Right">
+                    <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
                         <Label>Шаг снимков системы</Label>
                         <xctk:IntegerUpDown Name="NudSnapshotStep" 
                                             TextAlignment="Right" Width="100" Height="25" 
-                                            Minimum="1" Maximum="100000" Increment="1" Value="10"/>
+                                            Minimum="1" Maximum="100000" Increment="1" Value="10"
+                                            ValueChanged="OnValueChangedNudSnapshotStep"/>
                     </WrapPanel>
 
                     <WrapPanel HorizontalAlignment="Right">
@@ -278,10 +270,45 @@
                     </WrapPanel>
                 </StackPanel>
             </GroupBox>
-
+            
+            <GroupBox Header="Параметры АКФ скорости">
+                <StackPanel>
+                    <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
+                        <Label>Число отсчётов</Label>
+                        <xctk:IntegerUpDown Name="NudCountNumberAcf"
+                                            TextAlignment="Right" Width="100" Height="25"
+                                            Minimum="50" Maximum="10000" Increment="10" Value="100"
+                                            ValueChanged="OnValueChangedNudCountNumberAcf"/>
+                    </WrapPanel>
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Число повторений</Label>
+                        <xctk:IntegerUpDown Name="NudCountRepeatAcf"
+                                            TextAlignment="Right" Width="100" Height="25"
+                                            Minimum="5" Maximum="100" Increment="5" Value="5"/>
+                    </WrapPanel>
+                    <WrapPanel HorizontalAlignment="Right">
+                        <Label>Шаг повторений</Label>
+                        <xctk:IntegerUpDown Name="NudStepRepeatAcf"
+                                            TextAlignment="Right" Width="100" Height="25"
+                                            Minimum="5" Maximum="100" Increment="5" Value="10"/>
+                    </WrapPanel>
+                </StackPanel>
+            </GroupBox>
+            
             <GroupBox Header="Панель управления">
                 <StackPanel>
                     <WrapPanel Margin="0 5 0 0">
+                        <Button Name="BtnCreateModel" Width="50" Height="50"
+                                ToolTip="Создать модель"
+                                Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"
+                                Click="OnCreateModel">
+                            <Image Source="icons/check.png" Width="40" Height="40"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Button>
+                        <Label VerticalAlignment="Center">Создать модель</Label>
+                    </WrapPanel>
+                    
+                    <WrapPanel>
                         <Button Name="BtnStartCalculation" IsEnabled="False" Width="50" Height="50"
                             ToolTip="Запуск моделирования"
                             Background="{x:Null}" BorderBrush="{x:Null}" Foreground="{x:Null}"

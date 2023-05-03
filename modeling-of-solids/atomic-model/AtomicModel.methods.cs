@@ -141,18 +141,23 @@ public partial class AtomicModel
     /// <returns></returns>
     public double[] GetAcfs()
     {
-        var zt = new double[_countNumber];
-        for (var i = 0; i < _countRepetition; i++)
-        for (var j = 0; j < _countNumber; j++)
+        var zt = new double[CountNumberAcf];
+        for (var i = 0; i < CountRepeatAcf; i++)
+        for (var j = 0; j < CountNumberAcf; j++)
         {
             for (var k = 0; k < CountAtoms; k++)
                 zt[j] += k != 0
-                    ? (_vtList[i * _stepDelay][k].X * _vtList[j + i * _stepDelay][k].X +
-                       _vtList[i * _stepDelay][k].Y * _vtList[j + i * _stepDelay][k].Y +
-                       _vtList[i * _stepDelay][k].Z * _vtList[j + i * _stepDelay][k].Z) / _vtList[i * _stepDelay][k].Magnitude()
-                    : 1;
-            zt[j] /= _countNumber * _countRepetition * CountAtoms;
+                    ? (_vtList[i * StepRepeatAcf][k].X * _vtList[j + i * StepRepeatAcf][k].X +
+                       _vtList[i * StepRepeatAcf][k].Y * _vtList[j + i * StepRepeatAcf][k].Y +
+                       _vtList[i * StepRepeatAcf][k].Z * _vtList[j + i * StepRepeatAcf][k].Z)
+                    : _vtList[i * StepRepeatAcf][k].Magnitude();
+            // zt[j] /= CountRepeatAcf * CountAtoms;
         }
+
+        var max = zt.Max();
+        for (var i = 0; i < zt.Length; i++)
+            zt[i] /= max;
+            
         return zt;
     }
 

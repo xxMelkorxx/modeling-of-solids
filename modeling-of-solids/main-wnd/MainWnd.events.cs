@@ -41,4 +41,20 @@ public partial class MainWnd
         NudTemperature.IsEnabled = false;
         NudStepNorm.IsEnabled = false;
     }
+
+    private void OnValueChangedNudCountNumberAcf(object sender, RoutedPropertyChangedEventArgs<object> e)
+    {
+        if (NudCountNumberAcf.Value > NudCountStep.Value) NudCountNumberAcf.Value = NudCountStep.Value;
+    }
+    
+    private void OnValueChangedNudSnapshotStep(object sender, RoutedPropertyChangedEventArgs<object> e)
+    {
+        if (NudSnapshotStep.Value > NudCountStep.Value) NudSnapshotStep.Value = NudCountStep.Value;
+    }
+
+    private void OnValueChangedNudCountStep(object sender, RoutedPropertyChangedEventArgs<object> e)
+    {
+        if (NudCountNumberAcf is not null && NudCountNumberAcf.Value > NudCountStep.Value) NudCountNumberAcf.Value = NudCountStep.Value;
+        if (NudSnapshotStep is not null && NudSnapshotStep.Value > NudCountStep.Value) NudSnapshotStep.Value = NudCountStep.Value;
+    }
 }
