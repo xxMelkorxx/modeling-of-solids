@@ -109,6 +109,9 @@ public class PotentialMLJ : Potential
     /// <returns></returns>
     private double Plj(double r2)
     {
+        if (r2 == 0)
+            throw new DivideByZeroException();
+        
         // var ri = Sigma / r;
         // var ri3 = ri * ri * ri;
         // var ri6 = ri3 * ri3;
@@ -125,6 +128,9 @@ public class PotentialMLJ : Potential
     /// <returns></returns>
     private double Flj(double r2)
     {
+        if (r2 == 0)
+            throw new DivideByZeroException();
+        
         // var ri = Sigma / r;
         // var ri3 = ri * ri * ri;
         // var ri6 = ri3 * ri3;
