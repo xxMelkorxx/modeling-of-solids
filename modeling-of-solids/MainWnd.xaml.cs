@@ -227,7 +227,6 @@ public partial class MainWnd
         ChartAcfSpeed.Plot.Clear();
         ChartAcfSpeed.Refresh();
 
-
         // Сброс ProgressBar.
         ProgressBar.Value = 0;
 
@@ -356,7 +355,7 @@ public partial class MainWnd
         ChartRadDist.Refresh();
 
         // Отрисовка графика среднего квадрата смещения распределения.
-        ChartRt.Plot.AddSignalXY(_rrt.Select(p => p.X * _atomic.Dt * 1e12).ToArray(), _rrt.Select(p => p.Y).ToArray(), 
+        ChartRt.Plot.AddSignalXY(_rrt.Select(p => p.X * _atomic.Dt * 1e12).ToArray(), _rrt.Select(p => p.Y).ToArray(),
             Color.Indigo, $"Средний квадрат смещения (средняя температура - {_averT.ToString("F3")} К)");
         ChartRt.Plot.SetAxisLimits(
             xMin: 0, xMax: (_rrt.Max(p => p.X) == 0 ? NudStepRt.Value : _rrt.Max(p => p.X)) * _atomic.Dt * 1e12,
@@ -365,8 +364,9 @@ public partial class MainWnd
         ChartRt.Refresh();
 
         // Отрисовка графика АКФ скорости.
-        var zt = _atomic.GetAcfs();
-        ChartAcfSpeed.Plot.AddSignal(zt, 1 / (_atomic.Dt * 1e12), Color.Green, "Автокорреляционная функция скорости");
+        var zt = _atomic.GetAcfs(out var norm);
+        ChartAcfSpeed.Plot.AddSignal(zt, 1 / (_atomic.Dt * 1e12),
+            Color.Green, $"Автокорреляционная функция скорости; D = {(_atomic.GetSelfDiffCoefFromAcf(zt, norm) * 1e4).ToString("F3")} см²/с");
         ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12, yMin: -1, yMax: 1);
         ChartAcfSpeed.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
         ChartAcfSpeed.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));

@@ -139,7 +139,7 @@ public partial class AtomicModel
     /// Рассчёт автокорреляционной функции скорости атомов.
     /// </summary>
     /// <returns></returns>
-    public double[] GetAcfs()
+    public double[] GetAcfs(out double norm)
     {
         var zt = new double[CountNumberAcf];
         for (var i = 0; i < CountRepeatAcf; i++)
@@ -154,11 +154,26 @@ public partial class AtomicModel
             // zt[j] /= CountRepeatAcf * CountAtoms;
         }
 
-        var max = zt.Max();
+        norm = zt.Max();
         for (var i = 0; i < zt.Length; i++)
-            zt[i] /= max;
+            zt[i] /= norm;
             
         return zt;
+    }
+
+    /// <summary>
+    /// /// Расчет коэффициента самодиффузии.
+    /// </summary>
+    /// <param name="zt">АКФ скорости.</param>
+    /// <param name="norm"></param>
+    /// <returns></returns>
+    public double GetSelfDiffCoefFromAcf(double[] zt, double norm)
+    {
+        var result = Dt * (zt[0] + zt[zt.Length - 1]) / 2;
+        for (var i = 1; i < zt.Length - 1; i++)
+            result += zt[i] * Dt;
+
+        return result * norm / 3;
     }
 
     public double GetSigma() => AtomsType switch
