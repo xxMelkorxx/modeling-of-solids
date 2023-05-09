@@ -34,7 +34,7 @@
 
                 <WpfPlot Grid.Row="0" Name="ChartEnergy" FontFamily="JetBrains Mono"/>
                 <WpfPlot Grid.Row="1" Name="ChartRadDist" FontFamily="JetBrains Mono"/>
-                <WpfPlot Grid.Row="2" Name="ChartRt" FontFamily="JetBrains Mono"/>
+                <WpfPlot Grid.Row="2" Name="ChartMsd" FontFamily="JetBrains Mono"/>
                 <WpfPlot Grid.Row="3" Name="ChartAcfSpeed" FontFamily="JetBrains Mono"/>
             </Grid>
         </GroupBox>
@@ -208,7 +208,7 @@
                 <StackPanel>
                     <WrapPanel HorizontalAlignment="Right" Margin="0 5 0 0">
                         <Label>Временной шаг</Label>
-                        <xctk:DoubleUpDown Name="NudTimeStep" TextAlignment="Right" Width="75" Height="25" Minimum="0.0001" Maximum="1" Increment="0.01" Value="0.02" />
+                        <xctk:DoubleUpDown Name="NudTimeStep" TextAlignment="Right" Width="75" Height="25" Minimum="0.0001" Maximum="1" Increment="0.01" Value="0.01" />
                         <Label>пс</Label>
                     </WrapPanel>
 
@@ -237,7 +237,7 @@
 
                     <WrapPanel HorizontalAlignment="Right">
                         <Label>Шаг расчёта R²</Label>
-                        <xctk:IntegerUpDown Name="NudStepRt" 
+                        <xctk:IntegerUpDown Name="NudStepMsd" 
                                             TextAlignment="Right" Width="100" Height="25" 
                                             Minimum="10" Maximum="10000" Increment="1000" Value="100"/>
                     </WrapPanel>

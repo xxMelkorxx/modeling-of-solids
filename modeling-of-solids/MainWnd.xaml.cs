@@ -20,10 +20,10 @@ public partial class MainWnd
     private readonly System.Windows.Forms.Timer _timer;
     private List<List<Vector>> _positionsAtomsList;
 
-    private List<PointD> _rrt;
+    private List<PointD> _msdPoints;
     private List<double> _keValues, _peValues, _feValues;
     private double _averT;
-    private bool _isDisplacement, _isSnapshot, _isRenormSpeeds, _isNewSystem;
+    private bool _isDisplacement, _isSnapshot, _isNormSpeeds, _isNewSystem;
     private double _yMaxRb;
     private int _initStep;
 
@@ -41,10 +41,10 @@ public partial class MainWnd
     private void OnLoadedMainWindow(object sender, RoutedEventArgs e)
     {
         // Настройка графиков.
-        SetUpChart(ChartEnergy, "Графики энергий системы", "Время (пс)", "Энергия (эВ)");
+        SetUpChart(ChartEnergy, "Графики энергий системы", "t, пс", "E, эВ");
         SetUpChart(ChartRadDist, "График радиального распределения системы", "r, нм", "g(r)");
-        SetUpChart(ChartRt, "График  среднего квадрата смещения системы", "Время (пс)", "Сред. квадрат смещения (R²)");
-        SetUpChart(ChartAcfSpeed, "График автокорреляционной функции скорости", "Время (пс)", "Норм. АКФ скорости (Z)");
+        SetUpChart(ChartMsd, "График  среднего квадрата смещения системы", "t, пс", "R², нм²");
+        SetUpChart(ChartAcfSpeed, "График автокорреляционной функции скорости", "t, пс", "Z(t)");
 
         // Инициализация сцены для визуализации.
         _scene = new SceneManager { Viewport3D = Viewport };
@@ -80,8 +80,8 @@ public partial class MainWnd
         // Очистка графиков.
         ChartEnergy.Plot.Clear();
         ChartEnergy.Refresh();
-        ChartRt.Plot.Clear();
-        ChartRt.Refresh();
+        ChartMsd.Plot.Clear();
+        ChartMsd.Refresh();
         ChartRadDist.Plot.Clear();
         ChartRadDist.Refresh();
         ChartAcfSpeed.Plot.Clear();
@@ -142,7 +142,7 @@ public partial class MainWnd
             _isNewSystem = true;
 
             // Запоминание позиции атомов на 0-ом шаге.
-            _positionsAtomsList = new List<List<Vector>> { _atomic.GetPositionsAtoms() };
+            _positionsAtomsList = new List<List<Vector>> { _atomic.GetPosAtoms() };
 
             GC.Collect();
             // Отрисовка атомов на сцене.
@@ -201,7 +201,7 @@ public partial class MainWnd
     {
         var countStep = NudCountStep.Value;
         var snapshotStep = NudSnapshotStep.Value;
-        var stepRt = NudStepRt.Value;
+        var stepRt = NudStepMsd.Value;
         var T = NudTemperature.Value;
         var stepNorm = NudStepNorm.Value;
 
@@ -215,15 +215,15 @@ public partial class MainWnd
         BtnCancelCalculation.IsEnabled = true;
 
         // Инициализация массива среднего квадрата смещения.
-        _rrt = new List<PointD> { new(0, 0) };
+        _msdPoints = new List<PointD> { new(0, 0) };
         _averT = 0;
 
         // Очистка графиков.
         ChartEnergy.Plot.Clear();
         ChartEnergy.Plot.SetAxisLimits(_initStep * _atomic.Dt * 1e12, (_initStep + countStep - 1) * _atomic.Dt * 1e12);
         ChartEnergy.Refresh();
-        ChartRt.Plot.Clear();
-        ChartRt.Refresh();
+        ChartMsd.Plot.Clear();
+        ChartMsd.Refresh();
         ChartAcfSpeed.Plot.Clear();
         ChartAcfSpeed.Refresh();
 
@@ -231,8 +231,8 @@ public partial class MainWnd
         ProgressBar.Value = 0;
 
         // Вывод начальной информации.
-        RtbOutputInfo.AppendText(_isRenormSpeeds ? "\n\nЗапуск перенормировки скоростей...\n" : "\nЗапуск моделирования...\n");
-        RtbOutputInfo.AppendText($"Количество временных шагов: {countStep}\n" + (_isRenormSpeeds ? $"Шаг перенормировки: {stepNorm}\n\n" : "\n"));
+        RtbOutputInfo.AppendText(_isNormSpeeds ? "\n\nЗапуск перенормировки скоростей...\n" : "\n\nЗапуск моделирования...\n");
+        RtbOutputInfo.AppendText($"Количество временных шагов: {countStep}\n" + (_isNormSpeeds ? $"Шаг перенормировки: {stepNorm}\n\n" : "\n"));
         RtbOutputInfo.AppendText(TableHeader());
         RtbOutputInfo.AppendText(TableData(_initStep - 1, 1));
         RtbOutputInfo.ScrollToEnd();
@@ -261,7 +261,7 @@ public partial class MainWnd
         var stepNorm = (int)input.Args[4];
 
         // Начальная перенормировка скоростей, если она включено.
-        if (_isRenormSpeeds)
+        if (_isNormSpeeds)
         {
             _atomic.InitVelocityNormalization(T);
             _atomic.PulseZeroing();
@@ -284,14 +284,14 @@ public partial class MainWnd
             _atomic.Verlet();
 
             // Проведение перенормировки скоростей, если она включено.
-            if (_isRenormSpeeds && i % stepNorm == 0)
+            if (_isNormSpeeds && i % stepNorm == 0)
                 _atomic.VelocityNormalization(T);
 
             _keValues.Add(_atomic.Ke);
             _peValues.Add(_atomic.Pe);
             _feValues.Add(_atomic.Fe);
             _averT += _atomic.T;
-            _positionsAtomsList.Add(_atomic.GetPositionsAtoms());
+            _positionsAtomsList.Add(_atomic.GetPosAtoms());
 
             // Вывод информации в UI.
             if ((_isSnapshot && i % snapshotStep == 0) || i == _initStep + countStep - 1)
@@ -312,7 +312,7 @@ public partial class MainWnd
 
             // Расчёт среднего квадрата смещения.
             if (i % stepRt == 0 || i == _initStep + countStep - 1)
-                _rrt.Add(new PointD(i - _initStep + 1, _atomic.GetAverageSquareOffset()));
+                _msdPoints.Add(new PointD((i - _initStep + 1) * _atomic.Dt, _atomic.GetMsd()));
 
             // Обновление ProgressBar.
             _bgWorkerCalculation.ReportProgress((int)((double)(i - _initStep) / countStep * 1000d) + 1);
@@ -350,28 +350,35 @@ public partial class MainWnd
         var rd = _atomic.GetRadialDistribution();
         ChartRadDist.Plot.Clear();
         ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
-        ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
+        ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: rd.Max(p => p.Y) * 1.1);
         ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
         ChartRadDist.Refresh();
 
         // Отрисовка графика среднего квадрата смещения распределения.
-        ChartRt.Plot.AddSignalXY(_rrt.Select(p => p.X * _atomic.Dt * 1e12).ToArray(), _rrt.Select(p => p.Y).ToArray(),
-            Color.Indigo, $"Средний квадрат смещения (средняя температура - {_averT.ToString("F3")} К)");
-        ChartRt.Plot.SetAxisLimits(
-            xMin: 0, xMax: (_rrt.Max(p => p.X) == 0 ? NudStepRt.Value : _rrt.Max(p => p.X)) * _atomic.Dt * 1e12,
-            yMin: 0, yMax: (_rrt.Max(p => p.Y) == 0 ? 0.1 : _rrt.Max(p => p.Y)) * 1.5);
-        ChartRt.Plot.Legend(location: Alignment.UpperRight);
-        ChartRt.Refresh();
+        if (_msdPoints.Count != 1)
+        {
+            ChartMsd.Plot.AddSignalXY(_msdPoints.Select(p => p.X * 1e12).ToArray(), _msdPoints.Select(p => p.Y).ToArray(), Color.Indigo, "Средний квадрат смещения");
+            ChartMsd.Plot.SetAxisLimits(xMin: 0, xMax: _msdPoints.Max(p => p.X * 1e12), yMin: 0, yMax: (_msdPoints.Max(p => p.Y) == 0 ? 0.1 : _msdPoints.Max(p => p.Y)) * 1.5);
+            ChartMsd.Plot.Legend(location: Alignment.UpperRight);
+            ChartMsd.Refresh();
+        }
 
         // Отрисовка графика АКФ скорости.
         var zt = _atomic.GetAcfs(out var norm);
-        ChartAcfSpeed.Plot.AddSignal(zt, 1 / (_atomic.Dt * 1e12),
-            Color.Green, $"Автокорреляционная функция скорости; D = {(_atomic.GetSelfDiffCoefFromAcf(zt, norm) * 1e4).ToString("F3")} см²/с");
-        ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12, yMin: -1, yMax: 1);
+        ChartAcfSpeed.Plot.AddSignal(zt, 1 / (_atomic.Dt * 1e12), Color.Green, "Автокорреляционная функция скорости");
+        ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12);
+        // ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12, yMin: -1, yMax: 1);
         ChartAcfSpeed.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
         ChartAcfSpeed.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
         ChartAcfSpeed.Plot.Legend(location: Alignment.UpperRight);
         ChartAcfSpeed.Refresh();
+
+        // Вывод информации в Rtb.
+        var d1 = double.Round(_atomic.GetSelfDiffCoefFromAcf(zt, norm) * 1e9, 3);
+        var d2 = double.Round(_atomic.GetSelfDiffCoefFromMsd(_msdPoints, out var errorRateD2) * 1e-9, 3);
+        RtbOutputInfo.AppendText($"\n{double.Round(_averT, 3)} К - средняя температура");
+        RtbOutputInfo.AppendText($"\nDₛ ≈ {d1}•10⁻⁵ см²/с - коэф. самодифузии (полученный через АКФ)");
+        RtbOutputInfo.AppendText($"\nDₛ ≈ ({d2} ± {double.Round(errorRateD2 * 1e-9, 3)})•10⁻⁵ см²/с - коэф. самодифузии (полученный через средний квадрат смещения) ");
 
         BtnStartCalculation.IsEnabled = true;
         BtnCancelCalculation.IsEnabled = false;
@@ -399,7 +406,7 @@ public partial class MainWnd
     }
 
     /// <summary>
-    /// Событие отмена вычислений.
+    /// Событие отмены вычислений.
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>

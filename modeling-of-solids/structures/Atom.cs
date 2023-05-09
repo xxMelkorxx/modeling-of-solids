@@ -25,7 +25,7 @@ public class Atom
     /// <summary>
     /// Координаты атома без учёта периодичности границ.
     /// </summary>
-    public Vector PositionNonePeriodic;
+    public Vector PositionNp;
 
     /// <summary>
     /// Вектор скорости.
@@ -53,7 +53,7 @@ public class Atom
         ID = id;
         Type = atomType;
         Position = pos;
-        PositionNonePeriodic = pos;
+        PositionNp = pos;
         Velocity = Vector.Zero;
         Acceleration = Vector.Zero;
     }

@@ -30,14 +30,14 @@ public partial class MainWnd
 
     private void OnCheckedIsRenormSpeeds(object sender, RoutedEventArgs e)
     {
-        _isRenormSpeeds = true;
+        _isNormSpeeds = true;
         NudTemperature.IsEnabled = true;
         NudStepNorm.IsEnabled = true;
     }
 
     private void OnUncheckedIsRenormSpeeds(object sender, RoutedEventArgs e)
     {
-        _isRenormSpeeds = false;
+        _isNormSpeeds = false;
         NudTemperature.IsEnabled = false;
         NudStepNorm.IsEnabled = false;
     }

@@ -17,14 +17,14 @@ public partial class AtomicModel
             var displacement = (-1 * Vector.One + 2 * new Vector(_rnd.NextDouble(), _rnd.NextDouble(), _rnd.NextDouble())) * k * Lattice;
             Flux = Vector.Zero;
             atom.Position = Periodic(atom.Position + displacement, atom.Velocity * WeightAtom);
-            atom.PositionNonePeriodic += displacement;
+            atom.PositionNp += displacement;
         });
     }
 
     /// <summary>
     /// Начальная перенормировка скоростей.
     /// </summary>
-    /// <param name="temp"></param>
+    /// <param name="temp">Заданная температура.</param>
     public void InitVelocityNormalization(double temp)
     {
         var vsqrt = Math.Sqrt(3 * Kb * temp / WeightAtom);
@@ -76,7 +76,7 @@ public partial class AtomicModel
     /// <summary>
     /// Получение радиального распределения атомов.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Массив точек функции радиального распределения</returns>
     public PointD[] GetRadialDistribution()
     {
         var dr = 0.05 * Lattice * 0.726;
@@ -86,17 +86,17 @@ public partial class AtomicModel
             rd[i] = new PointD(i * dr, 0);
 
         // Подсчёт числа атомов в центральной части расчётной ячейки.
-        var countAtoms = Atoms.Where(atom =>
+        var countAtoms = Atoms.Count(atom =>
             atom.Position.X > 0.25 * BoxSize && atom.Position.X < 0.75 * BoxSize &&
             atom.Position.Y > 0.25 * BoxSize && atom.Position.Y < 0.75 * BoxSize &&
-            atom.Position.Z > 0.25 * BoxSize && atom.Position.Z < 0.75 * BoxSize).Count();
+            atom.Position.Z > 0.25 * BoxSize && atom.Position.Z < 0.75 * BoxSize);
 
         // Подсчёт n(r).
         foreach (var atomI in Atoms)
         foreach (var atomJ in Atoms)
         {
             if (atomJ.Equals(atomI)) continue;
-            var r2 = Vector.SquaredMagnitudeDifference(atomI.Position, atomJ.Position);
+            var r2 = (atomI.Position - atomJ.Position).SquaredMagnitude();
             for (var k = 0; k < rd.Length; k++)
                 if (r2 > k * k * dr2 && r2 < (k + 1) * (k + 1) * dr2)
                     rd[k].Y++;
@@ -114,31 +114,31 @@ public partial class AtomicModel
     }
 
     /// <summary>
-    /// Получение координат атомов.
+    /// Получение координат атомов на текущем шаге.
     /// </summary>
-    public List<Vector> GetPositionsAtoms() => Atoms.Select(atom => atom.Position).ToList();
+    public List<Vector> GetPosAtoms() => Atoms.Select(atom => atom.Position).ToList();
 
     /// <summary>
-    /// Получение координат атомов без учёта ПГУ.
+    /// Получение координат атомов без учёта ПГУ на текущем шаге.
     /// </summary>
-    public List<Vector> GetPositionsNonePeriodicAtoms() => Atoms.Select(atom => atom.PositionNonePeriodic).ToList();
+    private List<Vector> GetPosNpAtoms() => Atoms.Select(atom => atom.PositionNp).ToList();
 
     /// <summary>
     /// Получение скоростей атомов.
     /// </summary>
     /// <returns></returns>
-    public List<Vector> GetVelocitiesAtoms() => Atoms.Select(atom => atom.Velocity * 1e-9).ToList();
+    private List<Vector> GetVelocitiesAtoms() => Atoms.Select(atom => atom.Velocity * 1e-9).ToList();
 
     /// <summary>
-    /// Средний квадрат смещения.
+    /// Вычисление среднего квадрата смещения на текущем шаге.
     /// </summary>
-    /// <returns></returns>
-    public double GetAverageSquareOffset() => _rt1.Zip(GetPositionsNonePeriodicAtoms(), (vec1, vec2) => (vec2 - vec1).SquaredMagnitude()).Sum() / CountAtoms;
+    /// <returns>Средний квадрат смещения</returns>
+    public double GetMsd() => _rt0.Zip(GetPosNpAtoms(), (vec1, vec2) => (vec2 - vec1).SquaredMagnitude()).Sum() / CountAtoms;
 
     /// <summary>
     /// Рассчёт автокорреляционной функции скорости атомов.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Массив значений АКФ скорости.</returns>
     public double[] GetAcfs(out double norm)
     {
         var zt = new double[CountNumberAcf];
@@ -151,21 +151,21 @@ public partial class AtomicModel
                        _vtList[i * StepRepeatAcf][k].Y * _vtList[j + i * StepRepeatAcf][k].Y +
                        _vtList[i * StepRepeatAcf][k].Z * _vtList[j + i * StepRepeatAcf][k].Z)
                     : _vtList[i * StepRepeatAcf][k].Magnitude();
-            // zt[j] /= CountRepeatAcf * CountAtoms;
+            zt[j] /= CountRepeatAcf * CountAtoms;
         }
 
         norm = zt.Max();
         for (var i = 0; i < zt.Length; i++)
             zt[i] /= norm;
-            
+
         return zt;
     }
 
     /// <summary>
-    /// /// Расчет коэффициента самодиффузии.
+    /// Расчет коэффициента самодиффузии из АКФ скорости.
     /// </summary>
     /// <param name="zt">АКФ скорости.</param>
-    /// <param name="norm"></param>
+    /// <param name="norm">Коэффициент нормировки</param>
     /// <returns></returns>
     public double GetSelfDiffCoefFromAcf(double[] zt, double norm)
     {
@@ -174,6 +174,32 @@ public partial class AtomicModel
             result += zt[i] * Dt;
 
         return result * norm / 3;
+    }
+
+    /// <summary>
+    /// Расчет коэффициента самодиффузии из среднего квадрата смещения.
+    /// </summary>
+    /// <param name="msdPoints">Список точек среднего квадрата смещения.</param>
+    /// <param name="errorRate">Погрешность коэффициента самодиффузии.</param>
+    /// <returns>Коэффициент самодиффузии.</returns>
+    public double GetSelfDiffCoefFromMsd(IEnumerable<PointD> msdPoints, out double errorRate)
+    {
+        var msd = msdPoints.Skip(1).ToList();
+        var n = msd.Count;
+
+        // Метод наименьших квадратов.
+        var sumx = msd.Sum(p => p.X);
+        var sumy = msd.Sum(p => p.Y);
+        var sumxy = msd.Sum(p => p.X * p.Y);
+        var sumxx = msd.Sum(p => p.X * p.X);
+        var averX = sumx / n;
+        var b = (n * sumxy - sumx * sumy) / (n * sumxx - sumx * sumx);
+        var g = (sumxx * sumy - sumx * sumxy) / (n * sumxx - sumx * sumx);
+        var q = msd.Sum(p => double.Pow(b * p.X + g - p.Y, 2));
+        var sb = double.Sqrt(q / ((n - 2) * msd.Sum(p => double.Pow(p.X - averX, 2))));
+        errorRate = 1.96 * sb / 6;
+        
+        return b / 6;
     }
 
     public double GetSigma() => AtomsType switch

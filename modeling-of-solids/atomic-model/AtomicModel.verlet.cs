@@ -31,7 +31,7 @@ public partial class AtomicModel
         {
             var newPos = atom.Velocity * Dt + 0.5 * atom.Acceleration * Dt * Dt;
             atom.Position = Periodic(atom.Position + newPos, atom.Velocity * 1e-9 * WeightAtom);
-            atom.PositionNonePeriodic += newPos;
+            atom.PositionNp += newPos;
         });
 
         Atoms.ForEach(atom => atom.Velocity += 0.5 * atom.Acceleration * Dt);

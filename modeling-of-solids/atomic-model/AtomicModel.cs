@@ -132,7 +132,7 @@ public partial class AtomicModel
     /// <summary>
     /// Список начальных координат атомов.
     /// </summary>
-    private List<Vector> _rt1;
+    private List<Vector> _rt0;
 
     /// <summary>
     /// Список скоростей атомв в разные моменты времени.
@@ -178,7 +178,7 @@ public partial class AtomicModel
         // Начальная инициализация параметров.
         InitCalculation();
 
-        _rt1 = GetPositionsNonePeriodicAtoms();
+        _rt0 = GetPosNpAtoms();
         _vtList = new List<List<Vector>> { GetVelocitiesAtoms() };
     }
 

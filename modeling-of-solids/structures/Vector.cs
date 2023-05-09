@@ -34,7 +34,7 @@ public struct Vector
     public double MinElement() => Math.Min(Math.Min(X, Y), Math.Min(X, Z));
 
     /// <summary>
-    /// Квадрат величина вектора.
+    /// Квадрат величины вектора.
     /// </summary>
     public double SquaredMagnitude() => X * X + Y * Y + Z * Z;
 
@@ -42,20 +42,6 @@ public struct Vector
     /// Величина вектора.
     /// </summary>
     public double Magnitude() => Math.Sqrt(SquaredMagnitude());
-
-    /// <summary>
-    /// Квадрат магнитуды разности векторов.
-    /// </summary>
-    /// <param name="vec1">Вектор 1.</param>
-    /// <param name="vec2">Вектор 2.</param>
-    public static double SquaredMagnitudeDifference(Vector vec1, Vector vec2) => Math.Pow(vec2.X - vec1.X, 2) + Math.Pow(vec2.Y - vec1.Y, 2) + Math.Pow(vec2.Z - vec1.Z, 2);
-
-    /// <summary>
-    /// Магнитуда разности векторов.
-    /// </summary>
-    /// <param name="vec1">Вектор 1.</param>
-    /// <param name="vec2">Вектор 2.</param>
-    public static double MagnitudeDifference(Vector vec1, Vector vec2) => Math.Sqrt(SquaredMagnitudeDifference(vec1, vec2));
 
     public static Vector operator +(Vector vec1, Vector vec2) => new(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z);
 
