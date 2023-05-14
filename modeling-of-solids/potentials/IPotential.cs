@@ -6,7 +6,7 @@ public enum PotentialType
     MLJ
 }
 
-public abstract class Potential
+public interface IPotential
 {
     /// <summary>
     /// 1 эВ в Дж с нм.
@@ -18,19 +18,17 @@ public abstract class Potential
     /// </summary>
     public const double Kb = 8.61733262e-5;
 
-    public abstract AtomType Type { get; set; }
-
     /// <summary>
     /// Межатомная сила взаимодействия в потенциале.
     /// </summary>
     /// <param name="args"></param>
     /// <returns></returns>
-    public abstract object Force(object[] args);
+    public object Force(object[] args);
 
     /// <summary>
     /// Потенциальная энергия двух атомов.
     /// </summary>
     /// <param name="args"></param>
     /// <returns></returns>
-    public abstract object PotentialEnergy(object[] args);
+    public object PotentialEnergy(object[] args);
 }

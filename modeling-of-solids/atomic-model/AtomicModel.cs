@@ -100,7 +100,7 @@ public partial class AtomicModel
     /// <summary>
     /// Класс потенциала.
     /// </summary>
-    private Potential _potential;
+    private IPotential _potential;
 
     // Параметры симуляции.
     /// <summary>
@@ -213,7 +213,7 @@ public partial class AtomicModel
     {
         _potential = potentialType switch
         {
-            PotentialType.LJ => new PotentialLJ { Type = AtomsType },
+            PotentialType.LJ => new PotentialLJ {Type = AtomsType},
             PotentialType.MLJ => new PotentialMLJ { Type = AtomsType },
             _ => throw new ArgumentNullException()
         };

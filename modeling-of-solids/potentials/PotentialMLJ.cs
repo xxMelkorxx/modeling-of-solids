@@ -2,7 +2,7 @@
 
 namespace modeling_of_solids.potentials;
 
-public class PotentialMLJ : Potential
+public class PotentialMLJ : IPotential
 {
     /// <summary>
     /// Модуль потенциальной энергии взаимодействия между атомами при равновесии.
@@ -32,9 +32,8 @@ public class PotentialMLJ : Potential
     /// <summary>
     /// Тип атома.
     /// </summary>
-    public override AtomType Type
+    public AtomType Type
     {
-        get => _type;
         set
         {
             _type = value;
@@ -71,12 +70,7 @@ public class PotentialMLJ : Potential
 
     private AtomType _type;
 
-    /// <summary>
-    /// Вычисление силы.
-    /// </summary>
-    /// <param name="args"></param>
-    /// <returns></returns>
-    public override object Force(object[] args)
+    public object Force(object[] args)
     {
         var r = (double)args[0];
         var dxdydz = (Vector)args[1];
@@ -84,12 +78,7 @@ public class PotentialMLJ : Potential
         return (r < R1) ? Flj(r) * dxdydz : (r > R2) ? Vector.Zero : Flj(r) * dxdydz * K(r);
     }
 
-    /// <summary>
-    /// Вычисление потенциала.
-    /// </summary>
-    /// <param name="args"></param>
-    /// <returns></returns>
-    public override object PotentialEnergy(object[] args)
+    public object PotentialEnergy(object[] args)
     {
         var r2 = (double)args[0];
         return r2 < R1 ? Plj(r2) : r2 > R2 ? 0 : Plj(r2) * K(double.Sqrt(r2));
@@ -137,6 +126,6 @@ public class PotentialMLJ : Potential
         var ri2 = Sigma * Sigma / r2;
         var ri6 = ri2 * ri2 * ri2;
 
-        return 24 * D * Ev * ri6 * (2 * ri6 - 1) / r2;
+        return 24 * D * IPotential.Ev * ri6 * (2 * ri6 - 1) / r2;
     }
 }
