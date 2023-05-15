@@ -19,9 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="modeling-of-solids">
-        <HintPath>..\modeling-of-solids\obj\Release\net7.0-windows\modeling-of-solids.dll</HintPath>
-      </Reference>
+      <ProjectReference Include="..\modeling-of-solids\modeling-of-solids.csproj" />
     </ItemGroup>
 
 </Project>

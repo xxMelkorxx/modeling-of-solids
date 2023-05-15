@@ -25,28 +25,28 @@ public class PotentialLJ : IPotential
             switch (_type)
             {
                 case AtomType.Ar:
-                    D = 0.01029;
-                    Sigma = 0.3408;
+                    D = 0.01029 * IPotential.Ev;
+                    Sigma = 0.3408e-9;
                     break;
                 case AtomType.Cu:
-                    D = 0.00102;
-                    Sigma = 0.34635;
+                    D = 0.8176 * IPotential.Ev;
+                    Sigma = 0.2893e-9;
                     break;
                 case AtomType.Fe:
-                    D = 0.00172;
-                    Sigma = 0.25;
+                    D = 0.7864 * IPotential.Ev;
+                    Sigma = 0.2745e-9;
                     break;
                 case AtomType.Au:
-                    D = 2.3058;
-                    Sigma = 0.484648;
+                    D = 0.1791 * IPotential.Ev;
+                    Sigma = 0.288e-9;
                     break;
                 case AtomType.Si:
-                    D = 0.00916;
-                    Sigma = 0.372;
+                    D = 0.00916 * IPotential.Ev;
+                    Sigma = 0.372e-9;
                     break;
                 case AtomType.Ge:
-                    D = 0.0053;
-                    Sigma = 0.378;
+                    D = 0.0053 * IPotential.Ev;
+                    Sigma = 0.378e-9;
                     break;
                 default: throw new NullReferenceException();
             }
@@ -69,9 +69,6 @@ public class PotentialLJ : IPotential
         if (r2 == 0)
             throw new DivideByZeroException();
         
-        // var ri = Sigma / r;
-        // var ri3 = ri * ri * ri;
-        // var ri6 = ri3 * ri3;
         var ri2 = Sigma * Sigma / r2;
         var ri6 = ri2 * ri2 * ri2;
 
@@ -88,13 +85,9 @@ public class PotentialLJ : IPotential
         if (r2 == 0)
             throw new DivideByZeroException();
         
-        // var ri = Sigma / r;
-        // var ri3 = ri * ri * ri;
-        // var ri6 = ri3 * ri3;
         var ri2 = Sigma * Sigma / r2;
         var ri6 = ri2 * ri2 * ri2;
 
-        // return 24 * D * Ev * ri6 * (2 * ri6 - 1) / (r * r);
-        return 24 * D * IPotential.Ev * ri6 * (2 * ri6 - 1) / r2;
+        return 24 * D * ri6 * (2 * ri6 - 1) / r2;
     }
 }

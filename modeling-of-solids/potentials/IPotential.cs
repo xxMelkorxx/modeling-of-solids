@@ -9,24 +9,19 @@ public enum PotentialType
 public interface IPotential
 {
     /// <summary>
-    /// 1 эВ в Дж с нм.
+    /// 1 эВ в Дж.
     /// </summary>
-    public const double Ev = 0.1602176634;
+    public const double Ev = 1.602176634e-19;
 
     /// <summary>
-    /// Постоянная Больцмана (эВ/К).
-    /// </summary>
-    public const double Kb = 8.61733262e-5;
-
-    /// <summary>
-    /// Межатомная сила взаимодействия в потенциале.
+    /// Межатомная сила взаимодействия в потенциале (Дж * м).
     /// </summary>
     /// <param name="args"></param>
     /// <returns></returns>
     public object Force(object[] args);
 
     /// <summary>
-    /// Потенциальная энергия двух атомов.
+    /// Потенциальная энергия двух атомов (Дж).
     /// </summary>
     /// <param name="args"></param>
     /// <returns></returns>

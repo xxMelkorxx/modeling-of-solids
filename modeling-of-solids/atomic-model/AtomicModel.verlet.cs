@@ -9,12 +9,12 @@ public partial class AtomicModel
     /// </summary>
     public void InitCalculation()
     {
-        Ke = 0;
-        Pe = 0;
+        _ke = 0;
+        _pe = 0;
         _virial = 0;
         Accel();
 
-        Atoms.ForEach(atom => Ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom);
+        Atoms.ForEach(atom => _ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom);
     }
 
     /// <summary>
@@ -22,15 +22,14 @@ public partial class AtomicModel
     /// </summary>
     public void Verlet()
     {
-        Ke = 0;
-        Pe = 0;
+        _ke = 0;
+        _pe = 0;
         _virial = 0;
-        //_flux = Vector.Zero;
 
         Atoms.ForEach(atom =>
         {
             var newPos = atom.Velocity * Dt + 0.5 * atom.Acceleration * Dt * Dt;
-            atom.Position = Periodic(atom.Position + newPos, atom.Velocity * 1e-9 * WeightAtom);
+            atom.Position = Periodic(atom.Position + newPos, atom.Velocity * WeightAtom);
             atom.PositionNp += newPos;
         });
 
@@ -42,7 +41,7 @@ public partial class AtomicModel
         Atoms.ForEach(atom =>
         {
             atom.Velocity += 0.5 * atom.Acceleration * Dt;
-            Ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom / Ev;
+            _ke += 0.5 * atom.Velocity.SquaredMagnitude() * WeightAtom;
         });
 
         // Рассчёт АКФ скорости.
@@ -64,7 +63,6 @@ public partial class AtomicModel
         for (var i = 0; i < CountAtoms - 1; i++)
         {
             var sumForce = Vector.Zero;
-
             for (var j = i + 1; j < CountAtoms; j++)
             {
                 var rij = SeparationSqured(Atoms[i].Position, Atoms[j].Position, out var dxdydz);
@@ -74,9 +72,8 @@ public partial class AtomicModel
                 Atoms[i].Acceleration += force / WeightAtom;
                 Atoms[j].Acceleration -= force / WeightAtom;
 
-                Pe += (double)_potential.PotentialEnergy(new object[] { rij });
+                _pe += (double)_potential.PotentialEnergy(new object[] { rij });
             }
-
             _virial += Atoms[i].Position.X * sumForce.X + Atoms[i].Position.Y * sumForce.Y + Atoms[i].Position.Z * sumForce.Z;
         }
     }

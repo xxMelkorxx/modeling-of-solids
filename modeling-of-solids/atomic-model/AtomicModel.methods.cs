@@ -74,7 +74,7 @@ public partial class AtomicModel
     }
 
     /// <summary>
-    /// Получение радиального распределения атомов.
+    /// Получение радиального распределения атомов g(r(нм)).
     /// </summary>
     /// <returns>Массив точек функции радиального распределения</returns>
     public PointD[] GetRadialDistribution()
@@ -127,61 +127,20 @@ public partial class AtomicModel
     /// Получение скоростей атомов.
     /// </summary>
     /// <returns></returns>
-    private List<Vector> GetVelocitiesAtoms() => Atoms.Select(atom => atom.Velocity * 1e-9).ToList();
+    private List<Vector> GetVelocitiesAtoms() => Atoms.Select(atom => atom.Velocity).ToList();
 
     /// <summary>
     /// Вычисление среднего квадрата смещения на текущем шаге.
     /// </summary>
-    /// <returns>Средний квадрат смещения</returns>
+    /// <returns>Средний квадрат смещения (м²)</returns>
     public double GetMsd() => _rt0.Zip(GetPosNpAtoms(), (vec1, vec2) => (vec2 - vec1).SquaredMagnitude()).Sum() / CountAtoms;
-
-    /// <summary>
-    /// Рассчёт автокорреляционной функции скорости атомов.
-    /// </summary>
-    /// <returns>Массив значений АКФ скорости.</returns>
-    public double[] GetAcfs(out double norm)
-    {
-        var zt = new double[CountNumberAcf];
-        for (var i = 0; i < CountRepeatAcf; i++)
-        for (var j = 0; j < CountNumberAcf; j++)
-        {
-            for (var k = 0; k < CountAtoms; k++)
-                zt[j] += k != 0
-                    ? (_vtList[i * StepRepeatAcf][k].X * _vtList[j + i * StepRepeatAcf][k].X +
-                       _vtList[i * StepRepeatAcf][k].Y * _vtList[j + i * StepRepeatAcf][k].Y +
-                       _vtList[i * StepRepeatAcf][k].Z * _vtList[j + i * StepRepeatAcf][k].Z)
-                    : _vtList[i * StepRepeatAcf][k].Magnitude();
-            zt[j] /= CountRepeatAcf * CountAtoms;
-        }
-
-        norm = zt.Max();
-        for (var i = 0; i < zt.Length; i++)
-            zt[i] /= norm;
-
-        return zt;
-    }
-
-    /// <summary>
-    /// Расчет коэффициента самодиффузии из АКФ скорости.
-    /// </summary>
-    /// <param name="zt">АКФ скорости.</param>
-    /// <param name="norm">Коэффициент нормировки</param>
-    /// <returns></returns>
-    public double GetSelfDiffCoefFromAcf(double[] zt, double norm)
-    {
-        var result = Dt * (zt[0] + zt[zt.Length - 1]) / 2;
-        for (var i = 1; i < zt.Length - 1; i++)
-            result += zt[i] * Dt;
-
-        return result * norm / 3;
-    }
 
     /// <summary>
     /// Расчет коэффициента самодиффузии из среднего квадрата смещения.
     /// </summary>
     /// <param name="msdPoints">Список точек среднего квадрата смещения.</param>
     /// <param name="errorRate">Погрешность коэффициента самодиффузии.</param>
-    /// <returns>Коэффициент самодиффузии.</returns>
+    /// <returns>Коэффициент самодиффузии (м²/с).</returns>
     public double GetSelfDiffCoefFromMsd(IEnumerable<PointD> msdPoints, out double errorRate)
     {
         var msd = msdPoints.Skip(1).ToList();
@@ -198,18 +157,65 @@ public partial class AtomicModel
         var q = msd.Sum(p => double.Pow(b * p.X + g - p.Y, 2));
         var sb = double.Sqrt(q / ((n - 2) * msd.Sum(p => double.Pow(p.X - averX, 2))));
         errorRate = 1.96 * sb / 6;
-        
+
         return b / 6;
     }
 
+    /// <summary>
+    /// Расчет коэффициента самодиффузии из среднего квадрата смещения.
+    /// </summary>
+    /// <param name="p1"></param>
+    /// <param name="p2"></param>
+    /// <returns>Коэффициент самодиффузии (м²/с)</returns>
+    public double GetSelfDiffCoefFromMsd(PointD p1, PointD p2) => (p2.Y - p1.Y) / (p2.X - p1.X) / 6d;
+
+    /// <summary>
+    /// Рассчёт автокорреляционной функции скорости атомов.
+    /// </summary>
+    /// <returns>Массив значений АКФ скорости.</returns>
+    public double[] GetAcfs(out double norm)
+    {
+        var zt = new double[CountNumberAcf];
+        for (var i = 0; i < CountRepeatAcf; i++)
+        for (var j = 0; j < CountNumberAcf; j++)
+        {
+            for (var k = 0; k < CountAtoms; k++)
+                zt[j] += k != 0
+                    ? _vtList[i * StepRepeatAcf][k].X * _vtList[j + i * StepRepeatAcf][k].X +
+                      _vtList[i * StepRepeatAcf][k].Y * _vtList[j + i * StepRepeatAcf][k].Y +
+                      _vtList[i * StepRepeatAcf][k].Z * _vtList[j + i * StepRepeatAcf][k].Z
+                    : _vtList[i * StepRepeatAcf][k].Magnitude();
+            zt[j] /= CountAtoms;
+        }
+
+        norm = zt.Max();
+        for (var i = 0; i < zt.Length; i++)
+            zt[i] /= norm;
+
+        return zt;
+    }
+
+    /// <summary>
+    /// Расчет коэффициента самодиффузии из АКФ скорости.
+    /// </summary>
+    /// <param name="zt">АКФ скорости.</param>
+    /// <param name="norm">Коэффициент нормировки</param>
+    /// <returns>Коэффициент самодиффузии (м²/с)</returns>
+    public double GetSelfDiffCoefFromAcf(double[] zt, double norm) => (zt.Sum() - (zt[0] + zt[zt.Length - 1]) / 2) * Dt * norm / 3;
+
+    /// <summary>
+    /// Коэффициент sigma (м).
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public double GetSigma() => AtomsType switch
     {
-        AtomType.Ar => 0.3408,
-        AtomType.Cu => 0.34635,
-        AtomType.Fe => 0.25,
-        AtomType.Au => 0.288,
-        AtomType.Si => 0.372,
-        AtomType.Ge => 0.378,
+        AtomType.Ar => 0.3408e-9,
+        AtomType.Cu => 0.2893e-9,
+        AtomType.Fe => 0.2745e-9,
+        AtomType.Au => 0.288e-9,
+        AtomType.Si => 0.372e-9,
+        AtomType.Ge => 0.378e-9,
         _ => throw new ArgumentNullException()
     };
 }

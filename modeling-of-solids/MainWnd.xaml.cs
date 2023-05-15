@@ -158,8 +158,8 @@ public partial class MainWnd
             var rd = _atomic.GetRadialDistribution();
             _yMaxRb = rd.Max(p => p.Y);
             ChartRadDist.Plot.Clear();
-            ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
-            ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
+            ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X * 1e9).ToArray(), rd.Select(p => p.Y).ToArray(), Color.Blue, "Радиальное распределение");
+            ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 1e9 * 0.726, yMin: 0, yMax: _yMaxRb);
             ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
             ChartRadDist.Refresh();
 
@@ -304,8 +304,9 @@ public partial class MainWnd
                     // Настройка и отрисовка графика радиального распределения.
                     var rd = _atomic.GetRadialDistribution();
                     ChartRadDist.Plot.Clear();
-                    ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
-                    ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: _yMaxRb);
+                    ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X * 1e9).ToArray(), rd.Select(p => p.Y).ToArray(),
+                        color: Color.Blue, label: "Радиальное распределение");
+                    ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 1e9 * 0.726, yMin: 0, yMax: _yMaxRb);
                     ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
                     ChartRadDist.Refresh();
                 });
@@ -349,16 +350,16 @@ public partial class MainWnd
         // Отрисовка графика радиального распределения.
         var rd = _atomic.GetRadialDistribution();
         ChartRadDist.Plot.Clear();
-        ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X).ToArray(), rd.Select(p => p.Y).ToArray(), color: Color.Blue, label: "Радиальное распределение");
-        ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 0.726, yMin: 0, yMax: rd.Max(p => p.Y) * 1.1);
+        ChartRadDist.Plot.AddSignalXY(rd.Select(p => p.X * 1e9).ToArray(), rd.Select(p => p.Y).ToArray(), Color.Blue, "Радиальное распределение");
+        ChartRadDist.Plot.SetAxisLimits(xMin: 0, xMax: 5 * _atomic.Lattice * 1e9 * 0.726, yMin: 0, yMax: rd.Max(p => p.Y) * 1.1);
         ChartRadDist.Plot.Legend(location: Alignment.UpperRight);
         ChartRadDist.Refresh();
 
         // Отрисовка графика среднего квадрата смещения распределения.
         if (_msdPoints.Count != 1)
         {
-            ChartMsd.Plot.AddSignalXY(_msdPoints.Select(p => p.X * 1e12).ToArray(), _msdPoints.Select(p => p.Y).ToArray(), Color.Indigo, "Средний квадрат смещения");
-            ChartMsd.Plot.SetAxisLimits(xMin: 0, xMax: _msdPoints.Max(p => p.X * 1e12), yMin: 0, yMax: (_msdPoints.Max(p => p.Y) == 0 ? 0.1 : _msdPoints.Max(p => p.Y)) * 1.5);
+            ChartMsd.Plot.AddSignalXY(_msdPoints.Select(p => p.X * 1e12).ToArray(), _msdPoints.Select(p => p.Y * 1e18).ToArray(), Color.Indigo, "Средний квадрат смещения");
+            ChartMsd.Plot.SetAxisLimits(xMin: 0, xMax: _msdPoints.Max(p => p.X * 1e12), yMin: 0, yMax: (_msdPoints.Max(p => p.Y * 1e18) < 1e-10 ? 0.1 : _msdPoints.Max(p => p.Y * 1e18)) * 1.5);
             ChartMsd.Plot.Legend(location: Alignment.UpperRight);
             ChartMsd.Refresh();
         }
@@ -366,19 +367,20 @@ public partial class MainWnd
         // Отрисовка графика АКФ скорости.
         var zt = _atomic.GetAcfs(out var norm);
         ChartAcfSpeed.Plot.AddSignal(zt, 1 / (_atomic.Dt * 1e12), Color.Green, "Автокорреляционная функция скорости");
-        ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12);
-        // ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12, yMin: -1, yMax: 1);
+        ChartAcfSpeed.Plot.SetAxisLimits(xMin: 0, xMax: (zt.Length - 1) * _atomic.Dt * 1e12, yMin: -1, yMax: 1);
         ChartAcfSpeed.Plot.AddHorizontalLine(0, Color.FromArgb(120, Color.Black));
         ChartAcfSpeed.Plot.AddVerticalLine(0, Color.FromArgb(200, Color.Black));
         ChartAcfSpeed.Plot.Legend(location: Alignment.UpperRight);
         ChartAcfSpeed.Refresh();
 
         // Вывод информации в Rtb.
-        var d1 = double.Round(_atomic.GetSelfDiffCoefFromAcf(zt, norm) * 1e9, 3);
-        var d2 = double.Round(_atomic.GetSelfDiffCoefFromMsd(_msdPoints, out var errorRateD2) * 1e-9, 3);
+        var d1 = double.Round(_atomic.GetSelfDiffCoefFromAcf(zt, norm) * 1e9, 5);
+        var d2 = double.Round(_atomic.GetSelfDiffCoefFromMsd(_msdPoints, out _) * 1e9, 5);
+        var d3 = double.Round(_atomic.GetSelfDiffCoefFromMsd(_msdPoints[1], _msdPoints[_msdPoints.Count - 1]) * 1e9, 5);
         RtbOutputInfo.AppendText($"\n{double.Round(_averT, 3)} К - средняя температура");
         RtbOutputInfo.AppendText($"\nDₛ ≈ {d1}•10⁻⁵ см²/с - коэф. самодифузии (полученный через АКФ)");
-        RtbOutputInfo.AppendText($"\nDₛ ≈ ({d2} ± {double.Round(errorRateD2 * 1e-9, 3)})•10⁻⁵ см²/с - коэф. самодифузии (полученный через средний квадрат смещения) ");
+        RtbOutputInfo.AppendText($"\nDₛ ≈ {d2}•10⁻⁵ см²/с - коэф. самодифузии (полученный через средний квадрат смещения (МНК)) ");
+        RtbOutputInfo.AppendText($"\nDₛ ≈ {d3}•10⁻⁵ см²/с - коэф. самодифузии (полученный через средний квадрат смещения (грубо)) ");
 
         BtnStartCalculation.IsEnabled = true;
         BtnCancelCalculation.IsEnabled = false;

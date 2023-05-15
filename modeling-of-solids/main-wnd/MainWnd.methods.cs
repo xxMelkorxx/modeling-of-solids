@@ -43,14 +43,14 @@ public partial class MainWnd
         return "Структура создана...\n" +
                $"Тип атомов - {_atomic.AtomsType}\n" +
                $"Размер структуры (Nx/Ny) - {_atomic.Size}/{_atomic.Size}\n" +
-               $"Размер структуры (Lx/Ly) - {_atomic.BoxSize.ToString("F5")}/{_atomic.BoxSize.ToString("F5")} нм\n" +
+               $"Размер структуры (Lx/Ly) - {(_atomic.BoxSize * 1e9).ToString("F3")}/{(_atomic.BoxSize * 1e9).ToString("F3")} нм\n" +
                $"Число атомов - {_atomic.CountAtoms}\n" +
-               $"Параметр решётки - {_atomic.Lattice} нм\n" +
+               $"Параметр решётки - {_atomic.Lattice * 1e9} нм\n" +
                $"Кинетическая энергия - {_atomic.Ke.ToString("F5")} эВ\n" +
                $"Потенциальная энергия - {_atomic.Pe.ToString("F5")} эВ\n" +
                $"Полная энергия - {_atomic.Fe.ToString("F5")} эВ\n" +
                $"Температура - {_atomic.T.ToString("F1")} К\n" +
-               $"Объём - {_atomic.V.ToString("F5")} нм²\n" +
+               $"Объём - {(_atomic.V * 1e27).ToString("F5")} нм³\n" +
                $"Давление - {_atomic.P1.ToString("F1")} Па\n";
     }
 

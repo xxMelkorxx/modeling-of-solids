@@ -9,17 +9,17 @@ public partial class AtomicModel
     /// <summary>
     /// Список атомов.
     /// </summary>
-    public List<Atom> Atoms { get; set; }
+    public List<Atom> Atoms { get; }
 
     /// <summary>
     /// Размер расчётной ячейки.
     /// </summary>
-    public int Size { get; set; }
+    public int Size { get; }
 
     /// <summary>
-    /// Размер расчётной ячейки (нм).
+    /// Размер расчётной ячейки (м).
     /// </summary>
-    public double BoxSize { get; set; }
+    public double BoxSize => Size * Lattice;
 
     /// <summary>
     /// Число атомов.
@@ -27,64 +27,70 @@ public partial class AtomicModel
     public int CountAtoms => Atoms.Count;
 
     /// <summary>
-    /// Кинетическая энергия системы.
+    /// Кинетическая энергия системы (эВ).
     /// </summary>
-    public double Ke { get; set; }
+    public double Ke => _ke / Ev;
+
+    private double _ke;
 
     /// <summary>
-    /// Потенциальная энергия системы.
+    /// Потенциальная энергия системы (эВ).
     /// </summary>
-    public double Pe { get; set; }
+    public double Pe => _pe / Ev;
+
+    private double _pe;
 
     /// <summary>
-    /// Полная энергия системы.
+    /// Полная энергия системы (эВ).
     /// </summary>
-    public double Fe => Pe + Ke;
+    public double Fe => (_pe + _ke) / Ev;
 
     /// <summary>
     /// Температура системы.
     /// </summary>
-    public double T => 2d / 3d * Ke / (Kb / Ev * CountAtoms);
+    public double T => 2 * _ke / (3 * Kb * CountAtoms);
 
     /// <summary>
-    /// Давление системы, рассчитанный через вириал.
+    /// Давление системы, рассчитанный через вириал (Па).
     /// </summary>
-    public double P1 => (CountAtoms * Kb * T + _virial / (CountAtoms * 3)) / V * 1e9;
+    public double P1 => (_ke + _virial / CountAtoms) / (3 * V);
+    //public double P1 => (CountAtoms * Kb * T + _virial / CountAtoms) / (3 * V);
+
     private double _virial;
 
     /// <summary>
-    /// Давление системы.
+    /// Давление системы (Па).
     /// </summary>
-    public double P2 => (Flux.X + Flux.Y + Flux.Z) / (2 * BoxSize * BoxSize) * 1e18 / Dt;
+    public double P2 => (Flux.X + Flux.Y + Flux.Z) / (6 * BoxSize * BoxSize * Dt);
 
     public Vector Flux;
 
     /// <summary>
-    /// Объём системы.
+    /// Объём системы (м³).
     /// </summary>
     public double V => BoxSize * BoxSize * BoxSize;
 
     /// <summary>
     /// Тип атомов.
     /// </summary>
-    public AtomType AtomsType { get; set; }
+    public AtomType AtomsType { get; }
 
     /// <summary>
-    /// Параметр решётки
+    /// Параметр решётки (м)
     /// </summary>
     public double Lattice => AtomsType switch
     {
-        AtomType.Ar => 0.526,
-        AtomType.Cu => 0.3615,
-        AtomType.Fe => 0.2866,
-        AtomType.Au => 0.40781,
-        AtomType.Si => 0.54307,
-        AtomType.Ge => 0.566,
+        AtomType.Ar => 0.526e-9,
+        AtomType.Cu => 0.3615e-9,
+        AtomType.Fe => 0.2866e-9,
+        AtomType.Au => 0.40781e-9,
+        AtomType.Si => 0.54307e-9,
+        AtomType.Ge => 0.566e-9,
         _ => throw new ArgumentNullException()
     };
 
     /// <summary>
-    /// Масса атома.
+    /// Масса атома (кг).
     /// </summary>
     public double WeightAtom => AtomsType switch
     {
@@ -104,7 +110,7 @@ public partial class AtomicModel
 
     // Параметры симуляции.
     /// <summary>
-    /// Величина временного шага.
+    /// Величина временного шага (c).
     /// </summary>
     public double Dt { get; set; }
 
@@ -115,14 +121,14 @@ public partial class AtomicModel
 
     // Константы.
     /// <summary>
-    /// 1 эВ в Дж с нм.
+    /// 1 эВ в Дж.
     /// </summary>
-    private const double Ev = 0.1602176634;
+    private const double Ev = 1.602176634e-19;
 
     /// <summary>
-    /// Постоянная Больцмана (Дж/К с нм).
+    /// Постоянная Больцмана (Дж/К).
     /// </summary>
-    private const double Kb = 1.380649e-5;
+    private const double Kb = 1.380649e-23;
 
     /// <summary>
     /// Генератор случайных чисел.
@@ -166,7 +172,6 @@ public partial class AtomicModel
         Atoms = new List<Atom>();
         AtomsType = atomType;
         Size = size;
-        BoxSize = size * Lattice;
         CurrentStep = 1;
 
         // Выбор типа решётки.
@@ -213,7 +218,7 @@ public partial class AtomicModel
     {
         _potential = potentialType switch
         {
-            PotentialType.LJ => new PotentialLJ {Type = AtomsType},
+            PotentialType.LJ => new PotentialLJ { Type = AtomsType },
             PotentialType.MLJ => new PotentialMLJ { Type = AtomsType },
             _ => throw new ArgumentNullException()
         };
