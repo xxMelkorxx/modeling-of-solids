@@ -22,7 +22,7 @@ public partial class MainWnd
 
     private List<PointD> _msdPoints;
     private List<double> _keValues, _peValues, _feValues;
-    private double _averT;
+    private double _averT, _averP;
     private bool _isDisplacement, _isSnapshot, _isNormSpeeds, _isNewSystem;
     private double _yMaxRb;
     private int _initStep;
@@ -291,13 +291,14 @@ public partial class MainWnd
             _peValues.Add(_atomic.Pe);
             _feValues.Add(_atomic.Fe);
             _averT += _atomic.T;
+            _averP += _atomic.P1;
             _positionsAtomsList.Add(_atomic.GetPosAtoms());
 
             // Вывод информации в UI.
             if ((_isSnapshot && i % snapshotStep == 0) || i == _initStep + countStep - 1)
                 Application.Current.Dispatcher.Invoke(DispatcherPriority.Send, () =>
                 {
-                    RtbOutputInfo.AppendText(TableData(i, _isSnapshot ? snapshotStep : countStep));
+                    RtbOutputInfo.AppendText(TableData(_atomic.CurrentStep, _isSnapshot ? snapshotStep : countStep));
                     RtbOutputInfo.ScrollToEnd();
                     _atomic.Flux = Vector.Zero;
 
@@ -320,6 +321,7 @@ public partial class MainWnd
         }
 
         _averT /= countStep;
+        _averP /= countStep;
         _initStep += _atomic.CurrentStep - 1;
     }
 
@@ -378,13 +380,14 @@ public partial class MainWnd
         var d2 = double.Round(_atomic.GetSelfDiffCoefFromMsd(_msdPoints, out _) * 1e9, 5);
         var d3 = double.Round(_atomic.GetSelfDiffCoefFromMsd(_msdPoints[1], _msdPoints[_msdPoints.Count - 1]) * 1e9, 5);
         RtbOutputInfo.AppendText($"\n{double.Round(_averT, 3)} К - средняя температура");
+        RtbOutputInfo.AppendText($"\n{double.Round(_averP, 1)} Па - среднее давление");
         RtbOutputInfo.AppendText($"\nDₛ ≈ {d1}•10⁻⁵ см²/с - коэф. самодифузии (полученный через АКФ)");
         RtbOutputInfo.AppendText($"\nDₛ ≈ {d2}•10⁻⁵ см²/с - коэф. самодифузии (полученный через средний квадрат смещения (МНК)) ");
         RtbOutputInfo.AppendText($"\nDₛ ≈ {d3}•10⁻⁵ см²/с - коэф. самодифузии (полученный через средний квадрат смещения (грубо)) ");
 
+        _isNewSystem = false;
         BtnStartCalculation.IsEnabled = true;
         BtnCancelCalculation.IsEnabled = false;
-        _isNewSystem = false;
         SliderTimeStep.IsEnabled = true;
         SliderTimeStep.Maximum = _positionsAtomsList.Count - 1;
         BtnToBegin.IsEnabled = false;

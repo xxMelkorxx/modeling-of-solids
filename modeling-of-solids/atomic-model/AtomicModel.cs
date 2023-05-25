@@ -54,7 +54,6 @@ public partial class AtomicModel
     /// Давление системы, рассчитанный через вириал (Па).
     /// </summary>
     public double P1 => (_ke + _virial / CountAtoms) / (3 * V);
-    //public double P1 => (CountAtoms * Kb * T + _virial / CountAtoms) / (3 * V);
 
     private double _virial;
 
